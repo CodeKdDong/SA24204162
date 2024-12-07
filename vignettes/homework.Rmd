@@ -1,0 +1,3357 @@
+---
+title: "Statistical Computing Homework"
+author: "SA24204162"
+date: "2024-12-5"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Statistical Computing Homework}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+
+
+## Homework1
+
+### Exercise 3.4 
+
+#### Question
+The Rayleigh density is
+$$f(x)=\frac{x}{\sigma^2}e^{-x^2/(2\sigma^2)},x\geq 0,\sigma>0$$
+
+Develop an aglorithm to generate random samples from a Rayleigh($\sigma$) distribution.Generate Rayleigh($\sigma$) samples for several choices of $\sigma>0$ and check that the mode of the generated samples is close to the theoretical mode $\sigma$(check the histogram).
+
+#### Answer
+
+$$F(x)=\int_{0}^{x}\frac{x}{\sigma^2}e^{-x^2/(2\sigma^2)}dx=1-e^{-\frac{x^2}{2\sigma^2}}$$
+then 
+$$F^{-1}(u)=\sqrt{-2\sigma^2ln(1-u)},0\leq u\leq 1$$
+,we can use inverse transform algorithm generate samples.
+
+
+
+
+```{r}
+Generate_Rayleign <- function(N,seed,sig){
+set.seed(seed)
+u <- runif(N)
+x <- sqrt(-2*sig^2*log(1-u))
+hist(x,probability = TRUE,main = paste('Empirical Density Graph of Rayleign Distribution--',sig))
+y <- seq(0,8,0.01)
+lines(y,y/(sig[1]^2) * exp(-y^2/(2*sig^2)) )
+}
+```
+
+
+* $\sigma=0.1$
+```{r}
+seed = 123
+N = 10000
+sig <- seq(0.1,2,0.4)
+Generate_Rayleign(N,seed,sig[1])
+```
+
+* $\sigma=0.5$
+
+```{r}
+Generate_Rayleign(N,seed,sig[2])
+```
+
+
+* $\sigma=0.9$
+
+```{r}
+Generate_Rayleign(N,seed,sig[3])
+```
+
+
+* $\sigma=1.3$
+
+```{r}
+Generate_Rayleign(N,seed,sig[4])
+```
+
+
+* $\sigma=1.7$
+
+```{r}
+Generate_Rayleign(N,seed,sig[5])
+```
+
+#### Conclusion
+From the graph above,we can get that our algorithm behave robust for different choice of $\sigma$.when the parameter $\sigma$ become lager,the axis value x become more discrete.  
+
+
+
+### Exercise 3.11
+
+#### Question 
+Generate a random sample of size 1000 from a normal location mixture.The components of the mixturre have $N(0,1)$ and $N(3,1)$,distributions with mixing probabilities $p_1$ and $p_2=1-p_1$.Graph the histogram of the sample with density superimposed,for $p_1=0.75$.Repeat with different values for $p_1$ and observe whether the empirical distribution of the mixture appears to be binodal.Make a conjecture about the values of $p_1$ that produce bimodal mixtures.
+
+#### Answer
+
+
+
+```{r}
+theory_density <- function(p1,y){
+  return(p1/sqrt(2*pi)*exp(-((y)^2)/(2))+(1-p1)/sqrt(2*pi)*exp(-((y-3)^2)/(2)))
+}
+```
+
+
+```{r}
+set.seed(3)
+N = 1000
+p1 <- 0.75
+x1 <- rnorm(N,0,1)
+x2 <- rnorm(N,3,1)
+p <- sample(c(1,0),1,prob = c(p1,1-p1))
+x <- p*x1+(1-p)*x2
+hist(x,probability = TRUE,main = paste('Mix-Gaussian Distribution--',p1))
+y <- seq(-4,4,0.01)
+lines(y,theory_density(p1,y))
+```
+
+```{r}
+Generate_MixGaussian<- function(p1,N,seed){
+set.seed(seed)
+x1 <- rnorm(N,0,1)
+x2 <- rnorm(N,3,1)
+p <- sample(c(1,0),N,prob = c(p1,1-p1),replace = TRUE)
+x <- p*x1+(1-p)*x2
+hist(x,probability = TRUE,main = paste('Mix-Gaussian Distribution--',p1))
+y <- seq(-8,8,0.01)
+lines(y,theory_density(p1,y))
+}
+```
+
+
+```{r}
+p <- seq(0.1,0.9,0.1)
+```
+
+```{r}
+for(i in 1:9){
+Generate_MixGaussian(p[i],N,123)  
+}
+
+```
+
+#### Conclusion
+
+From the graph above,we find that the empirical distribution of the mixture appears to be binodal when $p_1$ is close to 0.5.
+
+
+### Exercise 3.20
+
+#### Question
+A compound Poission process is a stochastic process $\{X(t),t\geq 0\}$ that can be represented as the random sum $X(t)=\sum_{i=1}^{N(t)}Y_i,t\geq 0$,where $\{N(t),t\geq 0\}$ is a Poission process and $Y_1,Y_2,\cdots$ are iid and indepedent of $\{N(t),t\geq 0\}$.Write a program to simulate a compound Poisson($\lambda$)-Gamma process ($Y$ has a Gamma distribution).Estimate the mean and the variance of $X(10)$ for several choices of the parameters and compare with the theoretical values. 
+
+#### Answer
+
+```{r}
+# Function to simulate the compound Poisson-Gamma process
+Generate_compound_poisson_gamma <- function(lambda, k, theta, t, N) {
+results <- numeric(N)
+  
+for (i in 1:N) {
+# Simulate N(t), the number of events in time t, from Poisson distribution
+    N_t <- rpois(1, lambda * t)
+    
+    # Simulate Y_i from Gamma distribution, shape = k, rate = theta
+    if (N_t > 0) {
+      Y <- rgamma(N_t, shape = k, rate = theta)
+      results[i] <- sum(Y)  # X(t) = sum of the Y's
+    } else {
+      results[i] <- 0  # If N(t) = 0, X(t) = 0
+    }
+  }
+  
+  return(results)
+}
+```
+
+
+```{r}
+#parameters
+t <- 10# Time point for X(t)
+lambda <- c(1,3,5,10,20)# Rate of Poisson process
+k <- c(1,5,10,20,100)# Shape parameter of Gamma distribution
+theta <- c(1/2,1,3,10,20)# Rate parameter of Gamma distribution
+N <- 10000# Number of simulations
+```
+
+
+
+```{r}
+#Simalation
+set.seed(123)
+cat("Parameters Combination","Mean(Predict)","Mean(True)","Variance(Predict)","Variance(True)","Mean Error","Variance Error","\n")
+for(i in 1:length(lambda)){
+  for(j in 1:length(k)){
+    for(l in 1:length(theta)){
+      xt <- numeric(N)
+      xt <-Generate_compound_poisson_gamma(lambda[i],k[j], theta[l], t, N)
+      mean_hat <- mean(xt)
+      var_hat <- var(xt)
+      mean_true <- lambda[i] * t *(k[j]/theta[l])
+      var_true <- lambda[i] * t *(((k[j]+k[j]^2)/(theta[l]^2)))
+      value <- c(mean_hat,mean_true,var_hat,var_true)
+      relative_error<-c(abs((mean_hat-mean_true)/mean_true),abs((var_hat-var_true)/var_true))
+      cat("(",lambda[i],",",k[j],",",theta[l],"):",value,relative_error,"\n")
+    }
+  }
+}
+
+```
+
+
+#### Conclusion
+
+From the result,we can get a conclusion that estimation error(relative error) is very small,and behave robust for choice of parameters.
+
+
+
+
+## Homework2
+
+
+### Complexity of Quicksort
+
+#### Question 
+* For $n = 10^4, 2 × 10^4, 4 × 10^4, 6 × 10^4, 8 × 10^4$, apply the fast
+sorting algorithm to randomly permuted numbers of $1,\cdots,n$.
+
+* Calculate computation time averaged over 100 simulations,
+denoted by $a_n$.
+
+* Regress an on $t_n:= n log(n)$, and graphically show the results
+(scatter plot and regression line).
+
+#### Answer
+
+```{r include=FALSE}
+#load packages
+library(microbenchmark)
+library(ggplot2)
+```
+
+```{r}
+#Quicksort Alogorithm Realization
+Quicksort <- function(a){
+  if (length(a)<=1) {
+      return(a)
+  }
+  #select a bechmark element
+  pivot <- a[1]
+  left <- a[a<pivot]
+  right <- a[a>pivot]
+  #recursively use Quicksort function
+  return(c(Quicksort(left),pivot,Quicksort(right)))
+}
+```
+
+```{r}
+#Test on Quicksort function
+set.seed(124)
+v <- c(2,3,4,6,3,-1,4,9)
+Quicksort(v)
+```
+
+
+```{r}
+#Construct a function to compute the compution time
+measure_sort_time <- function(n,simulations = 100){
+  times <- replicate(simulations,{
+    # Generate a random permutation of numbers from 1 to n
+    perm <- sample(1:n)
+    # Measure the sorting time via Quicksort
+    start_time <- Sys.time()
+    Quicksort(perm)
+    end_time <- Sys.time()
+    time <- end_time - start_time
+    time
+  })
+  return(mean(times))
+}
+```
+
+
+
+
+
+
+```{r}
+n_values <- c(1,2,4,6,8)*10^4
+# Calculate average sorting times
+a_n <- sapply(n_values,measure_sort_time)
+#Calculate tn
+t_n <- n_values * log(n_values)
+```
+
+
+```{r}
+df <- data.frame(
+  t_n = t_n, 
+  a_n = a_n
+)
+fit <- lm(a_n~t_n,data= df)
+summary(fit)
+#Regress Plot
+# Plot scatter plot and regression line
+ggplot(df, aes(x = t_n, y = a_n)) +
+  geom_point() +
+  geom_smooth(method = "lm", col = "blue") +
+  labs(title = "Regression of Average Sorting Time on t_n",
+       x = "t_n = n log(n)",
+       y = "Average Sorting Time (a_n)") +
+  theme_minimal()
+```
+
+#### Conclusion
+
+Based on the regression output, the regression effect is significant, and the regression plot also shows a good fit. Therefore, through our numerical simulation method for verification, we can indeed conclude that the quicksort algorithm has an average time complexity of $O(n \log n)$.
+
+
+
+
+### Exercise 5.4
+
+#### Question
+
+Write a function to compute a Monte Carlo estimate of the Beta(3,3) cdf,and use the function to estimate $F(x)$ for $x=0.1,0.2,\cdots,0.9$.Compute the estimates with the values returned by the pbeta function in R.
+
+
+
+#### Answer
+```{r}
+#A function of estimate for Beta(3,3)
+BetaF_estimate <- function(x,seed=123,N=10000){
+  set.seed(seed)
+  X <- numeric(N)
+  X <- rbeta(N,3,3)
+  return(sum(X<x)/N)
+}
+```
+
+
+
+```{r}
+#Get an estimate via Monte Carlo
+x_values <- seq(0.1,0.9,0.1)
+F_estimate <- sapply(x_values,BetaF_estimate)
+#Generate value via pbeta function
+F_theory <- pbeta(x_values,3,3)
+#Compare the theory and simulation result
+plot(x_values,y = F_estimate,type = 'l',col = 'red',
+     main = 'cdf value of Beta(3,3)',xlab = 'x',ylab = 'F(x)')
+lines(x_values,y=F_theory,col = 'blue')
+legend('topleft',col = c('red','blue'),lty = c(1,1),
+       lwd = c(2,2),legend = c('Estimate','Theory'))
+```
+
+#### Conclusion
+From the scatter plot,we conclude that Monte Carlo estimate is almost as good as the theoretical value generated by the function rbeta.
+
+### Exercise 5.9
+
+#### Question
+
+The Rayleigh density is
+$$f(x)=\frac{x}{\sigma^2}e^{-x^2/(2\sigma^2)},x\geq0,\sigma>0.$$
+Implement a function to generate samples from a Rayleigh($\sigma$) distribution,using antithetic varibles.What is the percent reduction in variance of $\frac{X+X^{'}}{2}$ compared with $\frac{X_1+X_2}{2}$ for indepedent $X_1,X_2$?
+
+#### Answer
+```{r}
+#density function of rayleigh 
+f <- function(sig,x){
+  return(x/(sig^2)*exp(-x^2/(2*sig^2)))
+}
+
+```
+
+
+```{r}
+#Generate Rayleign distribution via Inverse transformation
+Generate_Rayleign <- function(sig,u,seed = 123){
+set.seed(seed)
+u1 <- u[1:(length(u)/2)]
+u2 <- u[(length(u)/2+1):(length(u))]
+x1 <- sqrt(-2*sig^2*log(1-u1))
+x2 <- sqrt(-2*sig^2*log(1-u2))
+x <- (as.vector(x1) + as.vector(x2))/2
+return(x)
+}
+```
+
+
+
+
+
+```{r}
+#antithetic variables
+N = 10000
+U1 <- runif(N/2,0,1)
+u <- c(U1,1-U1)
+sig_values <- seq(0.1,2,0.4)
+A <- matrix(0,nrow = 3,ncol = length(sig_values))
+rownames(A) <- c('anti_variance','simple_variance','reduction percent')
+colnames(A) <- sig_values
+count <- 1
+for(sig in sig_values){
+  x <- Generate_Rayleign(sig,u)
+  var_anti <- var(x)
+  A[1,count] <- var_anti
+  count <- count + 1
+}
+
+#simple variables
+u <- runif(N)
+count <- 1
+for(sig in sig_values){
+  x <- Generate_Rayleign(sig,u)
+  var_simple <- var(x)
+  A[2,count] <- var_simple
+  count <- count + 1
+}
+A[3,] <- (A[2,]-A[1,])/A[2,]
+A
+```
+
+#### Conclusion
+
+
+From the result above,we can conclude that the variance of antithetic variable reduce approximate 94\% compare with the simple variable(indepedent).At the same time,this result behaves robust for different choices of parameter $\sigma$.
+
+
+
+
+
+
+
+
+### Exercise 5.13
+
+#### Question
+
+Find two importance functions $f_1$ and $f_2$ that are supported on $(0,\infty)$ and are 'close' to
+$$g(x)=\frac{x^2}{\sqrt{2\pi}}e^{-x^2/2},x>1.$$
+Which of your two importance functions should produce the smaller variance in estimating
+$$\int_{1}^{\infty}\frac{x^2}{\sqrt{2\pi}}e^{-x^2/2}dx$$
+by importance sampling?Explain.
+#### Answer
+
+```{r}
+g <- function(x){
+  return(x^2/sqrt(2*pi)*exp(-x^2/2)) * (x>1)
+}
+f3 <- function(x) x^2
+```
+
+
+* the first importance functions use $x\sim N(0,1),x>1$
+
+
+* the second importance function use $N(3,0.5^2),x>1$
+
+* the third importance function use $x^2,x>1$
+
+```{r}
+#Estimate the integral via importance sampling
+set.seed(123)
+N <- 10000
+replica <- 1000
+estimate_f1 <- numeric(replica)
+estimate_f2 <- numeric(replica)
+estimate_f3 <- numeric(replica)
+for(i in 1:replica){
+  sample_1 <- rnorm(N,0,1)
+  sample_2 <- rnorm(N,3,0.5)
+  u <- runif(N)
+  sample_3 <- (3*u)^{1/3}
+  estimate_f1[i] <- mean(g(sample_1)/dnorm(sample_1)*(sample_1>1))
+  estimate_f2[i] <- mean(g(sample_2)/dnorm(sample_2,3,0.5)*(sample_2>1))
+  estimate_f3[i] <- mean(g(sample_3)/f3(sample_3)*(sample_3>1))
+}
+cat('the mean and variance of f1:',mean(estimate_f1),",",var(estimate_f1),'\n')
+cat('the mean and variance of f2:',mean(estimate_f2),",",var(estimate_f2),'\n')
+cat('the mean and variance of f3:',mean(estimate_f3),",",var(estimate_f3),'\n')
+```
+```{r}
+integrand <- function(x) (x^2 / sqrt(2 * pi)) * exp(-x^2 / 2)
+
+true_value <- integrate(integrand, 1, Inf)$value
+true_value
+
+```
+#### Conclusion
+
+From the result above,two normal distribution have smaller bias,and standard norm distribution have lower bias and variance than the other normal distribution $N(3,0.5^2)$(**It is coincide with our intuition,because the standard normal density is more likely to the goal function**).At the same time,$f(x)=x^2$ have smallest variance but it has very large bias,which means that it is not a good function to estimate our goal integral(**although they have a same term $x^2$,but the value of goal function have larger difference with it**).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Homework3
+
+
+### Exercises 6.6
+
+#### Question
+Estimate the 0.025,0.05,0.95,and 0.975 quantiles of the skewness $\sqrt{b_1}$      under normality by a Monte Carlo experiment.Compute the standard error of the estimates from (2.14) using the normal approximation for the density (with exact variance formula).Compare the estimated quantiles with the quantiles of the large sample approximation $\sqrt{b_1}\approx N(0,6/n).$
+
+#### Answer
+
+The variance of the q sample quantile is
+$$
+Var(\hat{x_q})=\frac{q(1-q)}{nf(x_q)^2}
+$$
+
+```{r}
+library(e1071)
+library(MASS)
+```
+
+```{r}
+#Generate data
+Generate_skewness <- function(sample_size,mean,se){
+  x <- rnorm(sample_size,mean,se)
+  skewness_values <- skewness(x)
+  return(skewness_values)
+}
+```
+
+
+
+```{r}
+#statistical inference 
+Skewness_quantiles <- function(skewness_values,quantile_value,mean,se){
+  quantiles <- quantile(skewness_values, probs = quantile_value)
+  variances <- quantile_value * (1-quantile_value)/(length(skewness_values)*dnorm(quantiles,mean,se))
+  SE <- sqrt(variances)
+  return(c(quantiles,SE))
+}
+```
+
+
+
+```{r}
+#result reporting
+Skewness_Result <- function(quantile.hat,quantile.se,quantile_values,sample_size){
+  #Generate large sample approximation of quantile
+  approx_quantiles <- qnorm(quantile_values, mean = 0, sd = sqrt(6/sample_size))
+  table <- matrix(c(quantile.hat, quantile.se, approx_quantiles), nrow = 3, byrow = TRUE)
+
+#rename the matrix
+rownames(table) <- c("quantile(estimate)", "quantile(sd)", "quantile(theory)")
+colnames(table) <- quantile_values
+
+# output the result
+print(table)
+}
+```
+
+```{r}
+set.seed(123)
+m <- 1e4
+n <- 1e3
+mean <- 0
+se <- 1
+quantile_values <- c(0.025,0.05,0.95,0.975)
+Skw <- numeric(m)
+quantile.hat <- quantile.se <- numeric(length(quantile_values))
+for(i in 1:m){
+  Skw[i] <- Generate_skewness(sample_size=n,mean=mean,se=se)
+}
+
+for(j in 1:length(quantile_values)){
+  quantile.hat[j] <- Skewness_quantiles(Skw,quantile_values[j],mean,se)[1]
+  quantile.se[j] <- Skewness_quantiles(Skw,quantile_values[j],mean,se)[2] 
+}
+Skewness_Result(quantile.hat,quantile.se,quantile_values,n)
+```
+
+
+```{r}
+set.seed(123)
+m <- 1e4
+n <- 10
+mean <- 0
+se <- 1
+quantile_values <- c(0.025,0.05,0.95,0.975)
+Skw <- numeric(m)
+quantile.hat <- quantile.se <- numeric(length(quantile_values))
+for(i in 1:m){
+  Skw[i] <- Generate_skewness(sample_size=n,mean=mean,se=se)
+}
+
+for(j in 1:length(quantile_values)){
+  quantile.hat[j] <- Skewness_quantiles(Skw,quantile_values[j],mean,se)[1]
+  quantile.se[j] <- Skewness_quantiles(Skw,quantile_values[j],mean,se)[2] 
+}
+Skewness_Result(quantile.hat,quantile.se,quantile_values,n)
+```
+
+
+#### Conclusion
+
+From the result above,we conclude that Estimate quantiles with Monte Carlo method
+is nearly same with the large sample approximation.However,if sample size $n$ is small,they will have some differences.For example,if we set sample size is equal to 10,they have significant differences between MC estimators and large sample estimators because of large sample condition is failed.
+
+
+
+
+
+### Exercise 6.B
+
+#### Question
+Tests for association based on Pearson product moment correlation $\rho$, Spear-
+man’s rank correlation coefficient $\rho_s$, or Kendall’s coefficient $\tau$ , are implemented in cor.test. Show (empirically) that the nonparametric tests based
+on $\rho_s$ or $\tau$ are less powerful than the correlation test when the sampled distribution is bivariate normal. Find an example of an alternative (a bivariate
+distribution $(X,Y)$ such that $X$ and $Y$ are dependent) such that at least one
+of the nonparametric tests have better empirical power than the correlation
+test against this alternative.
+
+#### Answer
+
+```{r}
+#Generate data
+Generate_biogauss <- function(sample_size,mu,sigma){
+  data_normal <- mvrnorm(sample_size, mu, sigma)
+  x_normal <- data_normal[, 1]
+  y_normal <- data_normal[, 2]
+  return(list(x=x_normal,y=y_normal))
+}
+
+Generate_alternative <- function(sample_size){
+  x_dep <- rnorm(sample_size)
+  y_dep <- sqrt(abs(x_dep)) + rnorm(sample_size, sd = 0.1)  # create dependent relationship
+  return(list(x=x_dep,y=y_dep))
+  }
+```
+
+
+```{r}
+#Statistical Inference
+Compare_Test <- function(x,y){
+  pearson_result <- cor.test(x, y)
+  spearman_result <- cor.test(x, y, method = "spearman")
+  kendall_result <- cor.test(x, y, method = "kendall")
+  return(list(p=pearson_result,s=spearman_result,k=kendall_result))
+}
+```
+
+```{r}
+#result reporting
+Correlation_Result <-function(normal,alternative){
+  normal_value <- c(normal$p$p.value,normal$s$p.value,normal$k$p.value)
+  alternative_value <- c(alternative$p$p.value,alternative$s$p.value,alternative$k$p.value)
+table <- matrix(c(normal_value,alternative_value),byrow = T,nrow = 2)
+#rename the matrix
+rownames(table) <- c("normal condition", "other condition")
+colnames(table) <- c('pearson','spearman','kendall')
+
+# output the result
+print(table)
+}
+```
+
+
+```{r}
+#Experiment procedure
+## parameter settings
+set.seed(123)
+n <- 10
+mu <- c(0,0)
+sigma <- matrix(c(1,0.8,0.8,1),2,2)
+rnormal <- Generate_biogauss(n,mu,sigma)
+ralternative <- Generate_alternative(n)
+normal <- Compare_Test(rnormal$x,rnormal$y)
+alternative <- Compare_Test(ralternative$x,ralternative$y)
+Correlation_Result(normal,alternative)
+```
+
+
+
+
+#### Conclusion
+From the results above, it can be seen that, in terms of power, the correlation test has optimal power under normality. However, if the normality assumption is not met, the other two tests exhibit better power.
+
+
+
+
+### Powers test
+
+#### Question
+* If we obtain the powers for two methods under a particular
+simulation setting with 10,000 experiments: say, 0.651 for one
+method and 0.676 for another method. We want to know if the
+powers are different at 0.05 level.
+
+* What is the corresponding hypothesis test problem?
+
+
+* What test should we use? Z-test, two-sample t-test, paired-t
+test or McNemar test? Why?
+
+
+* Please provide the least necessary information for hypothesis
+testing
+
+
+#### Answer
+
+To answer the question step by step:
+
+##### 1. **What is the corresponding hypothesis test problem?**
+   - **Null hypothesis ($H_0$))**: The powers of the two methods are not significantly different, i.e., $( \text{Power}_1 = \text{Power}_2 )$.
+   - **Alternative hypothesis ($H_A$))**: The powers of the two methods are significantly different, i.e., $( \text{Power}_1 \neq \text{Power}_2 )$.
+
+   We want to test whether the power values (0.651 and 0.676) are significantly different at the 0.05 significance level.
+
+##### 2. **What test should we use?**
+   - **McNemar's test** is used for paired binary data, such as correct vs incorrect classifications, and is not applicable here.
+   - **Z-test**: Since we are comparing two proportions (power estimates) from large samples (10,000 experiments), a **two-proportion Z-test** is appropriate. The power is based on a large number of simulations, and a Z-test can compare two proportions.
+   - **Two-sample t-test** is used for comparing means of independent samples, but we are comparing proportions, not means.
+   - **Paired t-test** is used for dependent samples with continuous data, which is not relevant here.
+
+   Therefore, the **Z-test** is the most suitable method because we are comparing two proportions derived from large independent samples. The test will determine if the difference in powers is statistically significant.
+
+##### 3. **What is the least necessary information for hypothesis testing?**
+   For the hypothesis test, we need:
+   - The two power estimates: $\hat{p}_1 = 0.651$  and  $\hat{p}_2 = 0.676$.
+   - The sample sizes for both methods:  $n_1 = n_2 = 10,000$.
+   - The significance level:  $\alpha = 0.05$.
+
+##### 4. **Steps for the Z-test**
+   For the two-proportion Z-test, the formula is:
+$$
+   Z = \frac{ \hat{p}_1 - \hat{p}_2 }{\sqrt{\hat{p}(1-\hat{p}) \left(\frac{1}{n_1} + \frac{1}{n_2}\right)}}
+$$
+   Where  $\hat{p}$  is the pooled proportion, calculated as:
+$$
+   \hat{p} = \frac{\hat{p}_1 n_1 + \hat{p}_2 n_2}{n_1 + n_2}
+$$
+
+   Once we compute the Z-value, you can compare it against the critical value from the standard normal distribution or calculate the p-value. If the p-value is less than 0.05, you reject the null hypothesis, indicating a significant difference in power between the two methods.
+
+
+
+
+
+
+
+
+## Homework4
+
+### Comparation of Bonferroni correction and B-H correction
+
+#### Question
+
+Of $N = 1000$ hypotheses, 950 are null and 50 are alternative.
+The p-value under any null hypothesis is uniformly distributed
+(use runif), and the p-value under any alternative hypothesis
+follows the beta distribution with parameter 0.1 and 1 (use
+rbeta). Obtain Bonferroni adjusted p-values and B-H adjusted
+p-values. Calculate FWER, FDR, and TPR under nominal level
+$\alpha=0.1$ for each of the two adjustment methods based on
+$m = 10000$ simulation replicates. You should output the 6
+numbers (3) to a 3 × 2 table (column names: Bonferroni
+correction, B-H correction; row names: FWER, FDR, TPR).
+Comment the results.
+
+
+#### Answer
+
+
+```{r}
+#data generation
+data_generation1 <- function(N0,N1){
+  p_null <- runif(N0)                            # Null hypotheses
+  p_alt <- rbeta(N1, 0.1, 1)                     # Alternative hypotheses
+  p_values <- c(p_null, p_alt)
+  return(p_values)
+}
+```
+
+```{r}
+# Statistical Inference
+statistical_inference1 <- function(p_values,alpha,N0,N1){
+  # Bonferroni correction
+  bonf_rejected <- (p.adjust(p_values, method = "bonferroni") < alpha)
+  # Benjamini-Hochberg correction
+  bh_rejected <- (p.adjust(p_values, method = "BH") < alpha)
+  
+  # Functions to calculate FWER, FDR, TPR
+calc_metrics <- function(rejected, true_alt) {
+  FWER <- as.numeric(sum(rejected[1:N0])>0)   # FWER: At least one false rejection
+  FDR <- sum(rejected[1:N0]) / max(1, sum(rejected))
+  TPR <- sum(rejected[(N0 + 1):(N0+N1)]) / N1
+  return(c(FWER = FWER, FDR = FDR, TPR = TPR))
+}
+  
+  # Update metrics for Bonferroni correction
+  bonf_metrics <- calc_metrics(bonf_rejected, true_alt = p_values[(N0+1):(N0+N1)])
+  
+  
+  # Update metrics for B-H correction
+  bh_metrics <- calc_metrics(bh_rejected, true_alt = p_values[(N0+1):(N0+N1)])
+  return(list(bonf_metrics=bonf_metrics,bh_metrics=bh_metrics))
+}
+```
+
+```{r}
+#Result Reporting
+result_reporting1 <- function(results,bonf_metrics,bh_metrics,m){
+  
+# Store averages of metrics
+  results[,1 ] <- results[,1 ] + bonf_metrics/m 
+  results[,2 ] <- results[,2] + bh_metrics /m
+  return(results)
+}
+```
+
+
+
+
+```{r}
+set.seed(123)
+
+# Simulation parameters
+N <- 1000      # Total number of hypotheses
+N0 <- 950        # Number of null hypotheses
+N1 <- N - N0     # Number of alternative hypotheses
+m <- 10000       # Number of simulation replicates
+alpha <- 0.1     # Nominal significance level
+# Storing results
+  results <- matrix(0, nrow = 3, ncol = 2)
+  colnames(results) <- c("Bonferroni correction", "B-H correction")
+  rownames(results) <- c("FWER", "FDR", "TPR")
+
+for (i in 1:m) {
+  p_values <- data_generation1(N0,N1)
+  
+  bonf_metrics <- statistical_inference1(p_values,alpha,N0,N1)$bonf_metrics
+  bh_metrics <- statistical_inference1(p_values,alpha,N0,N1)$bh_metrics
+  
+  results <- result_reporting1(results,bonf_metrics,bh_metrics,m)
+  
+}
+
+print(results)
+
+```
+
+
+
+
+
+#### Conclusion
+
+From the table above,we can see:
+
+* Bonferroni correction: Tends to be more conservative, aiming to control FWER at the cost of TPR.
+
+* B-H correction: More powerful (higher TPR) but may allow a higher FDR, as it targets the false discovery rate instead of FWER.
+
+### Exericise 7.4
+
+
+#### Question
+
+Refer to the air-conditioning data set aircondit provided in the boot package.The 12 observations are the times in hours between faliures of air-conditioning equipment[63,Example 1.1]:
+$$
+3,5,7,18,43,85,91,98,100,130,230,487
+$$
+Assume that the times between failures follow an exponential model $Exp(\lambda)$.Obtain the MLE of the hazard rate $\lambda$ and use bootstrap to estimate the bias and standard error of the estimate.
+
+#### Answer
+
+As we all know,the MLE estimate of hazard rate $\lambda$ is:
+$$\hat{\lambda}=1/\bar{x}$$
+where $\bar{x}$ is the mean of the failure times.
+
+```{r}
+#loading package
+library(boot)
+```
+
+
+```{r}
+#data generation
+data_generation2 <- function(){
+  # Air-conditioning failure times data
+  failure_times <- c(3, 5, 7, 18, 43, 85, 91, 98, 100, 130, 230, 487)
+  return(failure_times)
+}
+```
+
+```{r}
+#statistical inference
+statistical_inference2 <- function(data,Repetitions){
+  # Function to compute MLE of lambda for bootstrap samples
+  lambda_mle_fn <- function(data, indices) {
+  resampled_data <- data[indices]
+  return(1 / mean(resampled_data))
+}
+
+  # Perform bootstrap
+  bootstrap_results <- boot(data = data, statistic = lambda_mle_fn, R = Repetitions)
+  return(bootstrap_results)
+}
+```
+
+
+```{r}
+#result reporting
+result_reporting2 <- function(lambda_mle,bootstrap_results){
+  # Extract bias and standard error
+  lambda_mle_bias <- mean(bootstrap_results$t) - lambda_mle
+  lambda_mle_se <- sd(bootstrap_results$t)
+  # Output the results
+  cat("MLE of lambda:", lambda_mle, "\n")
+  cat("Bootstrap estimate of bias:", lambda_mle_bias, "\n")
+  cat("Bootstrap estimate of standard error:", lambda_mle_se, "\n")
+  cat('Relative Error of Estimate:',abs(lambda_mle_bias)/lambda_mle*100,'%')
+}
+```
+
+
+
+```{r}
+#Experimental Settings
+set.seed(123)
+Repetitions <- 1000 
+data <- data_generation2()
+# MLE of lambda
+lambda_mle <- 1 / mean(data)
+
+bootstrap_results <- statistical_inference2(data,Repetitions)
+result_reporting2(lambda_mle,bootstrap_results)
+```
+
+
+#### Conclusion
+
+From the result above,we concluded that bootstrap method has  approximate 16.3\% relative error rate,which is not low or high enough.
+
+
+
+
+### Exericise 7.5
+
+
+#### Question
+
+Refer to Exercise 7.4.Compute 95\% bootstrap confidence intervals for the mean time between failures $1/\lambda$ by the standard normal,basic,percentile,and BCa methods.Compare the intervals and explain why they may differ.
+
+#### Answer
+
+
+
+```{r}
+#statistical inference
+statistical_inference3 <- function(data,Repetitions,alpha){
+  # Function to compute MLE of 1/lambda for bootstrap samples
+  lambda_mle_fn2 <- function(data, indices) {
+  resampled_data <- data[indices]
+  return(mean(resampled_data))
+}
+
+  # Perform bootstrap
+  bootstrap_results <- boot(data = data, statistic = lambda_mle_fn2, R = Repetitions)
+  ci <- boot.ci(bootstrap_results,type=c("norm","basic","perc","bca"),conf = alpha)
+  return(ci)
+}
+```
+
+
+```{r}
+#result reporting
+result_reporting3 <- function(lambdad_mle,norm_ci,basic_ci,perc_ci,BCa_ci){
+  # Output results
+  mu <- 1 / lambda_mle
+  cat("Mean time between failures:", mu, "\n")
+cat("Normal CI:(",norm_ci[1],',',norm_ci[2],')', "\n")
+cat("Basic CI:(",basic_ci[1],',',basic_ci[2],')', "\n")
+cat("Percentile CI:(",perc_ci[1],',',perc_ci[2],')', "\n")
+cat("BCa CI:(",BCa_ci[1],',',BCa_ci[2],')', "\n")
+
+}
+```
+
+
+
+```{r}
+#Experimental Settings
+alpha <- 0.95
+m <- 1000
+Repetitions <- 1000
+
+ci.norm<-ci.basic<-ci.perc<-ci.bca<-matrix(NA,m,2)
+for(i in 1:m){
+ci <- statistical_inference3(data,Repetitions,alpha)
+ci.norm[i,]<-ci$norm[2:3];ci.basic[i,]<-ci$basic[4:5]
+ci.perc[i,]<-ci$percent[4:5];ci.bca[i,]<-ci$bca[4:5]
+}
+
+norm_ci <- c(mean(ci.norm[,1]),mean(ci.norm[,2]))
+basic_ci <- c(mean(ci.basic[,1]),mean(ci.basic[,2]))
+perc_ci <- c(mean(ci.perc[,1]),mean(ci.perc[,2]))
+BCa_ci <- c(mean(ci.bca[,1]),mean(ci.bca[,2]))
+
+result_reporting3(lambda_mle,norm_ci,basic_ci,perc_ci,BCa_ci)
+
+```
+
+
+
+
+
+
+
+#### Conclusion
+
+It can be seen that the average results from the 10,000 simulations yield intervals that all include the mean time between failures, but their ranges and lengths vary significantly.There are some explanations and comparison below.
+
+
+Explanation of the Methods:
+
+    Normal Method: Uses the mean of the bootstrap estimates and the standard deviation to create a CI based on the normal distribution.
+    
+    Basic Method: Computes the CI based on the distribution of the bootstrap estimates.
+    
+    Percentile Method: Directly uses the quantiles of the bootstrap estimates to form the CI.
+    
+    BCa (Bias-Corrected and Accelerated) Method: Adjusts for both bias and skewness in the bootstrap distribution, providing a more accurate CI.
+
+Comparison of Intervals:
+
+    Width and Location: The width and central location of the intervals may differ due to the methods used. The normal method assumes symmetry, while the percentile and BCa methods directly reflect the empirical distribution of the estimates.
+    
+    Bias Adjustment: The BCa method often provides narrower intervals, accounting for bias, which might make it preferable in some cases.
+    
+    Robustness: Percentile and BCa methods tend to perform better with small sample sizes and non-normal distributions, while the normal method may be less reliable if the distribution of estimates is skewed.
+
+
+
+
+
+
+
+
+
+## Homework5
+
+### Exercises 7.8
+
+#### Question
+
+Refer to Exercise 7.7. Obtain the jackknife estimates of bias and standard
+error of $\hat{\theta}$.
+
+
+#### Answer
+```{r}
+library(bootstrap)
+library(DAAG)
+```
+
+```{r}
+#generating data
+scor_generate <- function(){
+  data(scor)
+  return(scor)
+}
+```
+
+
+
+```{r}
+#statistical inference
+jackknife_infer <- function(data){
+  # Jackknife 方法
+  n <- nrow(data)
+  theta_jackknife <- numeric(n)
+
+  for (i in 1:n) {
+    # 排除第 i 个观测
+    data_excluded <- data[-i, ]
+    Sigma_hat_i <- cov(data_excluded)
+    eigenvalues_i <- eigen(Sigma_hat_i)$values
+    lambda_hat_i <- sort(eigenvalues_i, decreasing = TRUE)
+  
+    # 计算每次排除的theta
+    theta_jackknife[i] <- lambda_hat_i[1] / sum(lambda_hat_i)
+  }
+
+  return(theta_jackknife)
+}
+```
+
+```{r}
+#result reporting
+jackknife_report <- function(data,theta_jackknife){
+  n <- nrow(data)
+  # 计算协方差矩阵的MLE
+  Sigma_hat <- cov(data)
+
+  # 计算协方差矩阵的特征值
+  eigenvalues <- eigen(Sigma_hat)$values
+  lambda_hat <- sort(eigenvalues, decreasing = TRUE)
+
+  # 计算样本估计的theta
+  hat_theta <- lambda_hat[1] / sum(lambda_hat)
+  # 计算 Jackknife 偏差和标准误
+  bias_theta <- (n - 1) * (mean(theta_jackknife) - hat_theta)
+  se_theta <- sqrt((n - 1) / n * sum((theta_jackknife - mean(theta_jackknife))^2))
+  cat('the jackknife estimates of theta is',(n-1) * mean(theta_jackknife),'\n')
+  cat('the jackknife estimates of bias is',bias_theta,'\n')
+  cat('the jackknife estimates of standard error is',se_theta,'\n')
+}
+
+```
+
+
+```{r}
+data <- scor_generate()
+theta_jackknife <- jackknife_infer(data)
+jackknife_report(data,theta_jackknife)
+
+```
+
+
+#### Conclusion
+
+From the result above,we will conclude that the estimate bias of jackknife is very small.At the same time,standard error is small enough too.
+
+### Exercise 7.10
+
+#### Question
+In Example 7.18, leave-one-out (n-fold) cross validation was used to select
+the best fitting model. Repeat the analysis replacing the Log-Log model
+with a cubic polynomial model. Which of the four models is selected by the
+cross validation procedure? Which model is selected according to maximum
+adjusted $R^2$?
+
+
+
+#### Answer
+
+```{r}
+#data generating
+ironslag_generate <- function(){
+  attach(ironslag)
+ 
+  data <- list(chemical=chemical,magnetic=magnetic)
+  detach(ironslag)
+  return(data)
+}
+```
+
+
+Cubic polynomial model is 
+$$Y = \beta_0+\beta_1X+\beta_2X^2+\beta X^3+\epsilon$$
+```{r}
+#Statistical inference
+Cross_Validation <- function(chemical,magnetic){
+  n <- length(magnetic)
+  e1 <- e2 <- e3 <- e4 <- numeric(n)
+  
+  #for n-fold cross validation
+  #fit models on leave-one-out samples
+  for(k in 1:n){
+    x <- chemical[-k]
+    y <- magnetic[-k]
+    
+    J1 <- lm(y ~ x)
+    yhat1 <- J1$coef[1] + J1$coef[2] * chemical[k]
+    e1[k] <- magnetic[k] - yhat1
+    
+    J2 <- lm(y ~ x + I(x^2))
+    yhat2 <- J2$coef[1] + J2$coef[2] * chemical[k]+J2$coef[3] * chemical[k]^2
+    e2[k] <- magnetic[k] - yhat2
+    
+    J3 <- lm(log(y) ~ x )
+    logyhat3 <- J3$coef[1] + J3$coef[2] * chemical[k]
+    yhat3 <- exp(logyhat3)
+    e3[k] <- magnetic[k] - yhat3
+    
+    J4 <- lm(y ~ poly(x, 3, raw = TRUE))
+    yhat4 <- J4$coef[1] + J4$coef[2] * chemical[k] + J4$coef[3] * chemical[k]^2+ J4$coef[4] * chemical[k]^3
+    e4[k] <- magnetic[k] - yhat4
+  }
+  mse <- c(mean(e1^2),mean(e2^2),mean(e3^2),mean(e4^2))
+  x <- chemical
+  y <- magnetic
+  J1 <- lm(y ~ x)
+  J2 <- lm(y ~ x + I(x^2))
+  J3 <- lm(log(y) ~ x )
+  J4 <- lm(y ~ poly(x, 3, raw = TRUE))
+  model_result <- list(mse = mse,model1=J1,model2=J2,model3=J3,model4=J4) 
+  return(model_result)
+}
+```
+
+```{r}
+#Result Reporting
+CV_result <- function(model_result){
+  adj_r <- c(summary(model_result$model1)$adj.r.squared,summary(model_result$model2)$adj.r.squared,summary(model_result$model3)$adj.r.squared,summary(model_result$model4)$adj.r.squared)
+ 
+  pred_error <- matrix(c(model_result$mse,adj_r),nrow = 2,ncol = 4,byrow = T)
+  colnames(pred_error) <- c('Linear','Quadratic','Exponential','Cubic')
+  rownames(pred_error) <- c('prediction error','adj_Rsquare')
+  print(pred_error)
+}
+```
+
+```{r }
+data <- ironslag_generate()
+chemical <- as.vector(data$chemical)
+magnetic <- as.vector(data$magnetic)
+model_result <- Cross_Validation(chemical,magnetic)
+CV_result(model_result)
+
+```
+
+
+#### Conclusion
+
+Quadratic model is selected by the
+cross validation procedure
+
+Quadratic model is selected according to maximum
+adjusted $R^2$?
+
+### Exercise 8.1
+
+#### Question
+
+Implement the two-sample Cram´er-von Mises test for equal distributions as a
+permutation test. Apply the test to the data in Examples 8.1 and 8.2.
+
+
+#### Answer
+```{r}
+#data generate
+chickwts_generate <- function(){
+  attach(chickwts)
+  x <- sort(as.vector(weight[feed == 'soybean']))
+  y <- sort(as.vector(weight[feed == 'linseed']))
+  detach(chickwts)
+  data <- list(x=x,y=y)
+  return(data)
+}
+```
+
+
+```{r}
+#statistical inference
+# Cramér-von Mises test function
+cramer_von_mises <- function(x, y) {
+  n <- length(x)
+  m <- length(y)
+  combined <- c(x, y)
+  
+  # Calculate empirical CDFs
+  ecdf_x <- ecdf(x)
+  ecdf_y <- ecdf(y)
+  
+  # Compute the Cramér-von Mises statistic
+  W <- sum((ecdf_x(combined) - ecdf_y(combined))^2) * (1 / (n * m))
+  
+  return(W)
+}
+
+# Permutation test function
+permutation_test <- function(x, y, n_permutations) {
+  observed_stat <- cramer_von_mises(x, y)
+  combined <- c(x, y)
+  count <- 0
+  
+  for (i in 1:n_permutations) {
+    permuted <- sample(combined)
+    new_x <- permuted[1:length(x)]
+    new_y <- permuted[(length(x) + 1):length(permuted)]
+    permuted_stat <- cramer_von_mises(new_x, new_y)
+    
+    if (permuted_stat >= observed_stat) {
+      count <- count + 1
+    }
+  }
+  
+  p_value <- count / n_permutations
+  return(p_value)
+}
+
+
+```
+
+
+```{r}
+#Result Reporting
+permutation_result <- function(p_value){
+  cat("P-value:", p_value, "\n")
+}
+```
+
+
+```{r}
+set.seed(123)
+R <- 1000
+x <- chickwts_generate()$x
+y <- chickwts_generate()$y
+# 执行置换测试
+p_value <- permutation_test(x, y, R)
+permutation_result(p_value)
+```
+
+
+#### Conclusion
+
+From the result,the p-value from permutation test is 0.422,which is near from the example 8.1 and 8.2.
+
+### Exercise 8.2
+
+#### Question
+
+Implement the bivariate Spearman rank correlation test for independence
+[255] as a permutation test. The Spearman rank correlation test statistic can
+be obtained from function cor with method = "spearman". Compare the
+achieved significance level of the permutation test with the p-value reported
+by cor.test on the same samples.
+
+
+
+
+
+
+#### Answer
+```{r}
+#data generating
+random_generate <- function(n){
+  x <- runif(n)
+  y <- sin(x)
+  return(list(x=x,y=y))
+}
+```
+
+
+```{r}
+##Statistical inference
+# Spearman rank correlation permutation test function
+permutation_spearman_test <- function(x, y, n_permutations) {
+  observed_cor <- cor(x, y, method = "spearman")
+  count <- 0
+  
+  combined <- data.frame(x, y)
+  
+  for (i in 1:n_permutations) {
+    # Permute the y-values
+    permuted_y <- sample(y)
+    
+    # Calculate Spearman correlation on permuted data
+    permuted_cor <- cor(x, permuted_y, method = "spearman")
+    
+    if (abs(permuted_cor) >= abs(observed_cor)) {
+      count <- count + 1
+    }
+  }
+  
+  p_value <- count / n_permutations
+  return(p_value)
+}
+
+
+
+```
+
+
+
+```{r}
+#Result Reporting
+Spearman_reporting <- function(x,y,permutation_p_value){
+  # 计算 Spearman 相关性和 p 值
+spearman_test_result <- cor.test(x, y, method = "spearman")
+# 输出结果
+cat("Spearman correlation coefficient:", spearman_test_result$estimate, "\n")
+cat("P-value from cor.test:", spearman_test_result$p.value, "\n")
+cat("P-value from permutation test:", permutation_p_value, "\n")
+}
+```
+
+```{r}
+set.seed(123)
+R <- 1000
+n <- 500
+x <- random_generate(n)$x
+y <- random_generate(n)$y
+
+# 执行置换测试
+permutation_p_value <- permutation_spearman_test(x, y,R)
+Spearman_reporting(x,y,permutation_p_value)
+```
+
+#### Conclusion
+
+
+From the result above,we find that the p-value generated by cor.test is approximately near from permutation test.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Homework6
+
+
+
+
+### Exercise 9.3
+
+#### Question
+Use the Metropolis-Hastings sampler to generate random variables from a standard Cauchy distribution.Discard the first 1000 of the chain,and compare the deciles of the generated observations with the deciles of the standard Cauchy distribution(see qcauchy or qt with df=1).Recall that a Cauchy($\theta,\eta$)  distribution has density function
+$$
+f(x)=\frac{1}{\theta\pi(1+[(x-\eta)/\theta]^2)},-\infty<x<\infty,\theta>0
+$$
+The standard Cauchy has the Cauchy($\theta=1,\eta=0$)density.(Note that the standard Cauchy density is equal to the Student t density with one degree of freedom).
+
+#### Answer
+
+To generate random variables from a standard Cauchy distribution using the Metropolis-Hastings sampler, we can follow these steps. Here's a complete implementation:
+
+* Define the target distribution: The standard Cauchy distribution.
+
+* Set up the proposal distribution: For simplicity, we can use a normal distribution centered at the current value.
+
+* Implement the Metropolis-Hastings algorithm.
+
+* Discard the first 1000 samples.
+
+* Compare the deciles of the generated samples with the deciles of the standard Cauchy distribution.
+
+Detail codes are shown below:
+
+```{r}
+#upload package
+library(ggplot2)
+```
+
+
+```{r}
+## data generating
+# Metropolis-Hastings sampler function
+metropolis_hastings <- function(n, proposal_sd,X0) {
+  # Initialize the chain
+  x <- numeric(n)
+  x[1] <- X0  # Start from some given value
+  
+  for (i in 2:n) {
+    # Current value
+    current_x <- x[i - 1]
+    
+    # Propose a new value from a normal distribution
+    proposed_x <- rnorm(1, mean = current_x, sd = proposal_sd)
+    
+    # Calculate acceptance probability
+    acceptance_prob <- dcauchy(proposed_x) / dcauchy(current_x)
+    
+    # Accept or reject the proposed value
+    if (runif(1) < acceptance_prob) {
+      x[i] <- proposed_x
+    } else {
+      x[i] <- current_x
+    }
+  }
+  
+  return(x)
+}
+```
+
+
+```{r}
+## statistical inference
+deciles_calculating <- function(samples){
+# Calculate deciles of the generated samples
+sample_deciles <- quantile(samples, probs = seq(0, 1, 0.1))
+
+# Calculate deciles of the standard Cauchy distribution
+cauchy_deciles <- qcauchy(seq(0, 1, 0.1))
+
+# Create a comparison data frame
+comparison <- data.frame(
+  Decile = seq(0, 1, 0.1),
+  Sample_Deciles = sample_deciles,
+  Cauchy_Deciles = cauchy_deciles
+)
+
+# Print the comparison data frame
+return(comparison)
+}
+
+
+```
+
+
+
+```{r}
+## result reporting
+Comparison_plot <- function(comparison){
+# Plot the comparison
+ggplot(comparison, aes(x = Decile)) +
+  geom_line(aes(y = Sample_Deciles, color = "Sample Deciles"), linewidth = 1) +
+  geom_line(aes(y = Cauchy_Deciles, color = "Cauchy Deciles"), linewidth = 1) +
+  labs(title = "Deciles Comparison", y = "Value", x = "Decile") +
+  scale_color_manual(values = c("Sample Deciles" = "blue", "Cauchy Deciles" = "red")) +
+  theme_minimal()
+}
+```
+
+
+
+```{r}
+set.seed(123)
+n_samples <- 10000
+discard_samples <- 1000
+X0 = -5
+proposal_sd <- 1  # Standard deviation of the proposal distribution
+samples <- metropolis_hastings(n_samples, proposal_sd,X0)
+# Discard the first 1000 samples
+samples <- samples[-(1:discard_samples)]
+
+comparison <- deciles_calculating(samples)
+
+Comparison_plot(comparison)
+
+```
+
+
+
+#### Conclusion
+
+From the plot above,the deciles of the generated observations with the deciles of the standard Cauchy distribution is very similar.
+
+### Exercise 9.8
+
+#### Question
+This example appears in [40].Consider the bivariate density 
+$$
+f(x, y) \propto\binom{n}{x} y^{x+a-1}(1-y)^{n-x+b-1}, \quad x=0,1, \ldots, n, 0 \leq y \leq 1 .
+$$
+It can be shown that for fixed $a,b,n$,the conditional distributions are Binomial($n,y$) and Beta($x+a,n-x+b$).Use the Gibbs sampler to generate a chain with target joint density $f(x,y)$.
+
+#### Answer
+
+To implement a Gibbs sampler for the given bivariate density in R, we need to follow these steps:
+
+* Define the conditional distributions:
+
+  - $X|Y=y$ follows a Binomial distribution:$X\sim Binomial(n,y)$ 
+  
+  - $Y|X=x$ follows a Beta distribution:$Y\sim Beta(x+a,n-x+b)$ 
+
+* Set up the Gibbs sampler: This will involve iterating between drawing from the conditional distributions.
+
+* Generate samples and visualize the results.
+
+Here's the R code to implement the Gibbs sampler:
+
+```{r}
+#data generating
+# Gibbs sampler function
+gibbs_sampler <- function(n_samples, n, a, b) {
+  # Initialize vectors to store samples
+  x_samples <- numeric(n_samples)
+  y_samples <- numeric(n_samples)
+
+  # Initial values
+  x_samples[1] <- sample(0:n,1)
+  y_samples[1] <- runif(1)  # Starting with a reasonable value for y
+
+  for (i in 2:n_samples) {
+    # Sample x given y
+    y_current <- y_samples[i - 1]
+    x_samples[i] <- rbinom(1, n, y_current)
+
+    # Sample y given x
+    x_current <- x_samples[i]
+    alpha <- x_current + a
+    beta <- n - x_current + b
+    y_samples[i] <- rbeta(1, alpha, beta)
+  }
+
+  return(data.frame(X = x_samples, Y = y_samples))
+}
+```
+
+
+
+```{r}
+## statistical inference
+
+#I think no statistical inference need for this problem
+```
+
+```{r}
+## result reporting
+gibbs_plot <- function(samples){
+# Plot the results
+ggplot(samples, aes(x = X, y = Y)) +
+  geom_point(alpha = 0.2) +
+  labs(title = "Gibbs Sampler: Bivariate Density", x = "X", y = "Y") +
+  theme_minimal()
+}
+```
+
+```{r}
+set.seed(123)
+# Parameters
+n <- 10  # Total trials
+a <- 2   # Shape parameter for Beta distribution
+b <- 3   # Shape parameter for Beta distribution
+n_samples <- 10000  # Number of samples
+discard_samples <- 1000
+
+
+# Generate samples
+samples <- gibbs_sampler(n_samples, n, a, b)
+samples <- samples[-(1:discard_samples),]
+
+gibbs_plot(samples)
+```
+
+#### Conclusion
+
+From the result above,we find that generated sample via Gibbs sampler in stationary and satisfy correspondent maginal distribution.
+
+
+### Exercise Gelman-Rubin Method
+
+#### Question
+For each of the above exercise, use the Gelman-Rubin method
+to monitor convergence of the chain, and run the chain until it
+converges approximately to the target distribution according to
+$\hat{R}<1.2$.
+
+#### Answer
+
+To monitor the convergence of the Gibbs sampler using the Gelman-Rubin method (also known as the potential scale reduction factor, $\hat{R}$),we'll need to run multiple chains in parallel and then compute $\hat{R}$ for each parameter of interest.
+
+Here’s how we can modify the Gibbs sampler implementation to include the Gelman-Rubin convergence diagnostic:
+
+* Run multiple chains: Initialize several chains with different starting values.
+    
+* Store samples: Keep track of the samples from each chain.
+
+* Calculate $\hat{R}$: After each sampling iteration, calculate $\hat{R}$ to assess convergence.
+
+
+
+
+```{r}
+#data generating
+
+#Metropolis-Hasting function with multiple chains
+metropolis_hastings_multiple_chains <- function(n_chains,n_samples,proposal_sd,x0){
+  # Initialize a matrix to store samples for each chain
+  chains <- matrix(0, nrow = n_samples, ncol = n_chains)
+  # Run multiple chains
+  
+  for(chain in 1:n_chains){
+    # Store samples in the chains matrix
+    chains[,chain] <- metropolis_hastings(n_samples,proposal_sd,x0[chain])
+  }
+  return(chains)
+}
+
+
+
+
+# Gibbs sampler function with multiple chains
+gibbs_sampler_multiple_chains <- function(n_chains, n_samples, n, a, b) {
+  # Initialize a matrix to store samples for each chain
+  chains_x <- matrix(0, nrow = n_samples, ncol = n_chains)
+  chains_y <- matrix(0, nrow = n_samples, ncol = n_chains)
+
+  # Run multiple chains
+  
+  for(chain in 1:n_chains){
+    # Store samples in the chains matrix
+    chains_x[, chain] <- gibbs_sampler(n_samples, n, a, b)$X
+    chains_y[, chain] <- gibbs_sampler(n_samples, n, a, b)$Y
+  }
+  return(list(X = chains_x, Y = chains_y))
+}
+
+```
+
+
+```{r}
+#statistical inference
+# Function to compute Gelman-Rubin diagnostic
+Gelman.Rubin <- function(psi) {
+        # psi[i,j] is the statistic psi(X[i,1:j])
+        # for chain in i-th row of X
+        psi <- as.matrix(psi)
+        n <- ncol(psi)
+        k <- nrow(psi)
+
+        psi.means <- rowMeans(psi)     #row means
+        B <- n * var(psi.means)        #between variance est.
+        psi.w <- apply(psi, 1, "var")  #within variances
+        W <- mean(psi.w)               #within est.
+        v.hat <- W*(n-1)/n + (B/n)     #upper variance est.
+        r.hat <- v.hat / W             #G-R statistic
+        return(r.hat)
+}
+
+```
+
+```{r}
+#Result Reporting
+GB_monitor_plot <- function(chains,n_chains,b,n_samples){
+  #compute diagnostic statistics
+    psi <- t(apply(chains, 1, cumsum))
+    for (i in 1:nrow(psi))
+        psi[i,] <- psi[i,] / (1:ncol(psi))
+
+    #plot psi for the four chains
+#    par(mfrow=c(2,2))
+    for (i in 1:n_chains)
+      if(i==1){
+        plot((b+1):n_samples,psi[i, (b+1):n_samples], type="l",
+            xlab='Index', ylab=bquote(phi))
+      }else{
+        lines(psi[i, (b+1):n_samples], col=i)
+    }
+    par(mfrow=c(1,1)) #restore default
+    #plot the sequence of R-hat statistics
+    rhat <- rep(0, n_samples)
+    for (j in 1:n_samples){
+        rhat[j] <- Gelman.Rubin(psi[,1:j])}
+    plot((b+1):n_samples,rhat[(b+1):n_samples], type="l", xlab="", ylab="R")
+    abline(h=1.1, lty=2)
+}
+```
+
+```{r}
+set.seed(123)
+# Parameters
+n <- 10  # Total trials
+a <- 2   # Shape parameter for Beta distribution
+b <- 3   # Shape parameter for Beta distribution
+n_chains <- 4  # Number of chains
+n_samples <- 15000  # Number of samples
+proposal_sd <- 1
+b <- 1000       #burn-in length
+#choose overdispersed initial values
+x0 <- c(-5,-10, 5, 10)
+
+#Method1
+# Run the Metropolis-Hastings algorithm until convergence
+convergence_threshold <- 1.2
+R_hat <- Inf
+samples <- NULL
+
+while (R_hat >= convergence_threshold) {
+  chains1 <- metropolis_hastings_multiple_chains(n_chains,n_samples,proposal_sd,x0)
+  chains1 <- t(chains1)
+  R_hat<- Gelman.Rubin(chains1)
+  
+}
+print(R_hat)
+GB_monitor_plot(chains1,n_chains,b,n_samples)
+
+
+```
+
+```{r}
+set.seed(1234)
+# Run the Gibbs sampler until convergence
+convergence_threshold <- 1.2
+R_hat <- Inf
+samples <- NULL
+
+while (R_hat >= convergence_threshold) {
+  chains2 <- gibbs_sampler_multiple_chains(n_chains, n_samples, n, a, b)
+  X <- t(chains2$X)
+  Y <- t(chains2$Y)
+  # Compute R_hat for both X and Y
+  R_hat_x <- Gelman.Rubin(X)
+  R_hat_y <- Gelman.Rubin(Y)
+  R_hat <- max(R_hat_x, R_hat_y)
+  
+}
+
+GB_monitor_plot(X,n_chains,b,n_samples)
+GB_monitor_plot(Y,n_chains,b,n_samples)
+
+
+```
+
+
+
+
+#### Conclusion
+
+From the result above,Exercise 9.3`s series don`t convergence with sample goes large,I guess it is the choice of proposal distirbution or initial values caused.Exercise 9.8 has a better result and get a stationary series when sample gets large.
+
+
+### Exercise Proof of stationary
+
+
+#### Question
+Proof the Stationary of Metropolis-Hastings sampler Algorithm in continuous situation.
+
+
+Algorithm(continuous situation)
+
+* Target pdf:$f(x)$
+
+* Replace i and j with s and r
+
+* Proposal distribution (pdf):$g(r|s)$
+
+* Acceptance probability:$\alpha(s,r)=min\{\frac{f(r)g(s|r)}{f(s)g(r|s)},1\}$
+
+* Transition kernel(mixture distribution)
+
+$$
+K(r,s)=I(s\neq r)\alpha(r,s)g(s|r)+I(s=r)[1-\int \alpha(r,s)g(s|r)]
+$$
+
+* Stationarity:$K(s,r)f(s)=K(r,s)f(r)$
+
+#### Answer
+To prove the stationarity of the Metropolis-Hastings (MH) sampler algorithm in a continuous setting, we need to show that the transition kernel $K(s, r)$ preserves the target distribution $f(x)$. Specifically, we will demonstrate that 
+
+$$
+K(s, r) f(s) = K(r, s) f(r)
+$$
+
+for all $s$ and $r$.
+
+##### Step 1: Define the Transition Kernel
+
+The transition kernel is defined as:
+
+$$
+K(r,s) = I(s \neq r) \alpha(r,s) g(s|r) + I(s = r) \left[1 - \int \alpha(r,s) g(s|r) ds\right]
+$$
+
+where $I$ is an indicator function, $\alpha(s, r)$ is the acceptance probability, and $g(s|r)$ is the proposal distribution.
+
+##### Step 2: Write the Acceptance Probability
+
+The acceptance probability is given by:
+
+$$
+\alpha(s, r) = \min \left\{1, \frac{f(r) g(s|r)}{f(s) g(r|s)}\right\}
+$$
+
+##### Step 3: Show the Detailed Balance Condition
+
+To establish stationarity, we will show that:
+
+$$
+K(s, r) f(s) = K(r, s) f(r)
+$$
+
+###### Case 1: 
+
+$s \neq r$
+
+$$
+K(s, r) f(s) = \alpha(s, r) g(r|s) f(s)
+$$
+
+Substituting $\alpha(s, r)$:
+
+$$
+K(s, r) f(s) = \min \left\{1, \frac{f(r) g(s|r)}{f(s) g(r|s)}\right\} g(r|s) f(s)
+$$
+
+Now, we need to compute $K(r, s)$:
+
+$$
+K(r, s) f(r) = \alpha(r, s) g(s|r) f(r)
+$$
+
+Substituting $\alpha(r, s)$:
+
+$$
+K(r, s) f(r) = \min \left\{1, \frac{f(s) g(r|s)}{f(r) g(s|r)}\right\} g(s|r) f(r)
+$$
+
+##### Step 4: Comparing the Two Cases
+
+Now, we need to show that these two expressions are equal. Notice that:
+
+1. If $\alpha(s, r) = 1$, then $f(r) g(s|r) = f(s) g(r|s)$.
+2. If $\alpha(s, r) < 1$, we have:
+
+   $$
+   \alpha(s, r) g(r|s) f(s) = \frac{f(r) g(s|r)}{f(s) g(r|s)} g(r|s) f(s)
+   $$
+
+   which simplifies to:
+
+   $$
+   f(r) g(s|r)
+   $$
+
+   Therefore, the equality holds as:
+
+$$
+K(s, r) f(s) = K(r, s) f(r)
+$$
+
+###### Case 2: 
+
+$s = r$
+
+In this case, we have:
+
+$$
+K(s, s) f(s) = \left[1 - \int \alpha(s,r) g(s|r) dr\right] f(s)
+$$
+
+And for $K(r, r)$:
+
+$$
+K(r, r) f(r) = \left[1 - \int \alpha(r,s) g(r|s) ds\right] f(r)
+$$
+
+The same argument holds, showing that both terms will converge since the integral will equalize in both cases.
+
+
+
+
+
+#### Conclusion
+
+The stationarity of the Metropolis-Hastings sampler is established through the detailed balance condition, ensuring that the target distribution is preserved across transitions in the Markov chain.
+
+
+
+
+
+## Homework7
+
+### Exercise 11.3
+
+#### Question
+
+(a)Write a function to compute the kth term in 
+$$
+\sum_{k=0}^{\infty} \frac{(-1)^{k}}{k!2^{k}} \frac{\|a\|^{2 k+2}}{(2 k+1)(2 k+2)} \frac{\Gamma\left(\frac{d+1}{2}\right) \Gamma\left(k+\frac{3}{2}\right)}{\Gamma\left(k+\frac{d}{2}+1\right)},
+$$
+where $d \geq 1$is an integer,  a  is a vector in $\mathbb{R}^{d}$, and $\|\cdot\|$ denotes the Euclidean norm. Perform the arithmetic so that the coefficients can be computed for (almost) arbitrarily large $k$ and $d$. (This sum converges for all $a \in \mathbb{R}^{d}$ ).
+
+(b) Modify the function so that it computes and returns the sum.
+
+(c) Evaluate the sum when $a=(1,2)^{T}$.
+
+
+
+
+#### Answer
+
+
+
+##### (a) Compute the kth term
+
+We will write a function to compute the `kth term` 
+
+$$
+\frac{(-1)^{k}}{k!2^{k}} \frac{\|a\|^{2 k+2}}{(2 k+1)(2 k+2)} \frac{\Gamma\left(\frac{d+1}{2}\right) \Gamma\left(k+\frac{3}{2}\right)}{\Gamma\left(k+\frac{d}{2}+1\right)}
+$$
+
+We can use `gamma` function to compute the gamma function values,use `factorial` to compute the factorial.
+
+```{r}
+kth_term <- function(k, a, d) {
+  # compute Euclid norm ||a||
+  norm_a <- sqrt(sum(a^2))
+  
+  # 计算每一部分
+  part1 <- (-1)^k / (factorial(k) * 2^k)
+  part2 <- norm_a^(2 * k + 2) / ((2 * k + 1) * (2 * k + 2))
+  part3 <- gamma((d + 1) / 2) * gamma(k + 1.5) / gamma(k + d / 2 + 1)
+  
+  return(part1 * part2 * part3)
+}
+```
+
+
+
+
+##### (b) compute the sum of series
+
+Next,we modify the function to compute the sum of series.We will set a error threshold  `tol`，when the absolute value is less than `tol` ,then start iterate.
+
+```{r}
+series_sum <- function(a, d, tol = 1e-10, max_terms = 1000) {
+  total_sum <- 0
+  k <- 0
+  
+  repeat {
+    term <- kth_term(k, a, d)
+    total_sum <- total_sum + term
+    
+    # if the value is less than threshold,exit!!!
+    if (abs(term) < tol || k >= max_terms) {
+      break
+    }
+    
+    k <- k + 1
+  }
+  
+  return(total_sum)
+}
+```
+
+
+
+
+##### (c) compute the series sum when$a = (1, 2)^T$
+
+Last,we can use function 'series_sum' to compute the series sum when$a=(1,2)^T$and$d=2$
+```{r}
+a <- c(1, 2)
+d <- 2
+result <- series_sum(a, d)
+result
+```
+
+
+
+
+#### Conclusion
+
+After we run code,the result of series sum when$a=(1,2)^T$is 1.532.
+
+### Exercise 11.4
+
+
+#### Question
+
+Find the intersection points $A(k)$ in  (0,$\sqrt{k}$)  of the curves
+$$
+S_{k-1}(a)=P\left(t(k-1)>\sqrt{\frac{a^{2}(k-1)}{k-a^{2}}}\right)
+$$
+and
+$$
+S_{k}(a)=P\left(t(k)>\sqrt{\frac{a^{2} k}{k+1-a^{2}}}\right),
+$$
+for $k=4: 25,100,500,1000$, where  t(k)  is a Student  t  random variable with  k  degrees of freedom. (These intersection points determine the critical values for a  t -test for scale-mixture errors proposed by Székely [260].)
+#### Answer
+
+To find the intersection points $A(k)$ of the curves$S_{k-1}(a)$and $S_k(a)$for specified values of$k$, we can proceed by defining and numerically solving for$a$ where the two curves are equal.
+
+##### 1. Define$S_{k-1}(a)$ and$S_k(a)$
+
+Given:
+$$
+S_{k-1}(a) = P\left(t(k-1) > \sqrt{\frac{a^2 (k-1)}{k - a^2}}\right)
+$$
+$$
+S_k(a) = P\left(t(k) > \sqrt{\frac{a^2 k}{k + 1 - a^2}}\right)
+$$
+where$t(k-1)$ and$t(k)$are Student’s$t$-distributions with$k-1$ and$k$ degrees of freedom, respectively.
+
+In R, the probability$P(t(k) > x)$ can be computed using the cumulative distribution function of the $t$-distribution:
+$$
+P(t(k) > x) = 1 - F_{t(k)}(x),
+$$
+where$F_{t(k)}$is the cumulative distribution function of$t$ with$k$ degrees of freedom.
+
+##### 2. Define the Difference Function
+
+Define a function$f(a; k) = S_{k-1}(a) - S_k(a)$, and then find the root of this function (i.e., where$f(a; k) = 0$) within the interval$(0, \sqrt{k})$.
+
+##### 3. Implementation in R
+
+We can use the bisection method  to find the root of$f(a; k)$ within the interval$(0, \sqrt{k})$for each specified $k$.
+
+
+
+```{r}
+# Define S_k-1 and S_k
+S_k_minus_1 <- function(a, k) {
+  1 - pt(sqrt(a^2 * (k - 1) / (k - a^2)), df = k - 1)
+}
+
+S_k <- function(a, k) {
+  1 - pt(sqrt(a^2 * k / (k + 1 - a^2)), df = k)
+}
+
+# Define function to find root using Bisection method
+find_intersection_bisection <- function(k, tol = 1e-6, max_iter = 1000) {
+  # Define the function to find zero
+  f <- function(a) S_k_minus_1(a, k) - S_k(a, k)
+  
+   # Initial interval (0, sqrt(k))
+  epsilon <- 1e-3
+  lower <- epsilon
+  upper <- sqrt(k)-epsilon
+  
+  if (f(lower) * f(upper) > 0) {
+    stop("No sign change detected in the initial interval; adjust the interval.")
+  }
+  
+  
+  # Bisection method loop
+  for (i in 1:max_iter) {
+    mid <- (lower + upper) / 2
+    f_mid <- f(mid)
+    
+    if (abs(f_mid) < tol) {
+      return(mid)
+    } else if (f(lower) * f_mid < 0) {
+      upper <- mid
+    } else {
+      lower <- mid
+    }
+  }
+  
+  warning("Bisection method did not converge.")
+  return(NA)
+}
+
+# Calculate intersection points for specified values of k
+k_values <- c(4:25, 100,500,1000)
+
+root <- numeric(length(k_values))
+for(i in 1:length(k_values)){
+  root[i] <- find_intersection_bisection(k_values[i])
+}
+
+names(root) <- paste0("k=", k_values)
+root
+
+
+
+```
+
+
+
+
+
+
+
+#### Conclusion
+
+From the result above,we find that when k is lager,the intersection $a$ become lager too.
+
+
+
+### Exercise 11.5
+
+#### Question
+
+Write a function to solve the equation
+$$
+\begin{array}{l}
+\frac{2 \Gamma\left(\frac{k}{2}\right)}{\sqrt{\pi(k-1)} \Gamma\left(\frac{k-1}{2}\right)} \int_{0}^{c_{k-1}}\left(1+\frac{u^{2}}{k-1}\right)^{-k / 2} d u \\
+\quad=\frac{2 \Gamma\left(\frac{k+1}{2}\right)}{\sqrt{\pi k} \Gamma\left(\frac{k}{2}\right)} \int_{0}^{c_{k}}\left(1+\frac{u^{2}}{k}\right)^{-(k+1) / 2} d u
+\end{array}
+$$
+for $a$, where
+$$
+c_{k}=\sqrt{\frac{a^{2} k}{k+1-a^{2}}} .
+$$
+
+Compare the solutions with the points $A(k)$ in Exercise 11.4.
+
+#### Answer
+
+To solve this equation for$a$, we need to implement the equation as a function of$a$and then find the root of the difference between the left and right sides. 
+
+##### Steps to Implement the Solution
+
+1. **Define$c_k$ and$c_{k-1}$**:
+   We have$c_k = \sqrt{\frac{a^2 k}{k+1-a^2}}$and$c_{k-1} = \sqrt{\frac{a^2 (k-1)}{k-a^2}}$.
+
+2. **Define the Integrals**:
+   The two integrals in the equation can be expressed as:
+  $$
+   \int_{0}^{c_{k-1}}\left(1+\frac{u^{2}}{k-1}\right)^{-k / 2} \, d u
+  $$
+   and
+  $$
+   \int_{0}^{c_{k}}\left(1+\frac{u^{2}}{k}\right)^{-(k+1) / 2} \, d u.
+  $$
+   We can numerically approximate these integrals using R’s `integrate` function.
+
+3. **Set Up the Equation**:
+   The left side and right side of the equation involve Gamma functions, which we can calculate with R’s `gamma` function.
+
+4. **Solve for$a$**:
+   Define a function to compute the difference between the two sides, and use a root-finding algorithm (bisection method) to find the value of$a$that makes this difference zero.
+
+
+
+```{r error=TRUE}
+# Define c_k and c_{k-1} as functions of a and k
+c_k <- function(a, k) {
+  sqrt(a^2 * k / (k + 1 - a^2))
+}
+
+c_k_minus_1 <- function(a, k) {
+  sqrt(a^2 * (k - 1) / (k - a^2))
+}
+
+# Define the left side integral
+integral_left <- function(a, k) {
+  c_km1 <- c_k_minus_1(a, k)
+  integrand <- function(u) (1 + u^2 / (k - 1))^(-k / 2)
+  return(integrate(integrand, 0, c_km1)$value)
+}
+
+# Define the right side integral
+integral_right <- function(a, k) {
+  c_k_val <- c_k(a, k)
+  integrand <- function(u) (1 + u^2 / k)^(-(k + 1) / 2)
+  return(integrate(integrand, 0, c_k_val)$value)
+}
+
+# Define the full equation difference function
+equation_difference <- function(a, k) {
+  gamma_ratio_left <- 2 * gamma(k / 2) / (sqrt(pi * (k - 1)) * gamma((k - 1) / 2))
+  gamma_ratio_right <- 2 * gamma((k + 1) / 2) / (sqrt(pi * k) * gamma(k / 2))
+  
+  left_side <- gamma_ratio_left * integral_left(a, k)
+  right_side <- gamma_ratio_right * integral_right(a, k)
+  
+  return(left_side - right_side)
+}
+
+
+# Define function to find root using Bisection method
+find_a <- function(k, tol = 1e-6, max_iter = 1000) {
+  # Define the function to find zero
+  f <- function(a) equation_difference(a,k)
+  
+  # Initial interval (0, sqrt(k))
+  epsilon <- 1e-2
+  lower <- epsilon * k
+  upper <- sqrt(k)-epsilon * k
+  
+  if (f(lower) * f(upper) > 0) {
+    stop("No sign change detected in the initial interval; adjust the interval.")
+  }
+  # Bisection method loop
+  for (i in 1:max_iter) {
+    mid <- (lower + upper) / 2
+    f_mid <- f(mid)
+    
+    if (abs(f_mid) < tol) {
+      return(mid)
+    } else if (f(lower) * f_mid < 0) {
+      upper <- mid
+    } else {
+      lower <- mid
+    }
+  }
+  
+  warning("Bisection method did not converge.")
+  return(NA)
+}
+
+
+
+# Compare solutions for specified k values
+k_values <- c(4:25, 100, 500, 1000)
+solutions <- numeric(length(k_values))
+for(i in 1:length(k_values)){
+  solutions[i] <- find_a(k_values[i])
+  print(c(k_values[i],solutions[i]))
+  
+}
+
+names(solutions) <- paste0("k=", k_values)
+solutions
+```
+Some solutions cannot get via bisection method.We use another method below.
+
+```{r}
+compare <- matrix(c(root,solutions),nrow = 2,byrow = T)
+colnames(compare) <- k_values
+rownames(compare) <- c('Exercise 11.4','Exercise 11.5')
+compare
+```
+
+
+$0$ represent we can not find the optimal values.
+
+
+```{r}
+find_root_of_equation <- function(k) {
+
+  # General integral function
+  integral_expr <- function(u, n) {
+    (1 + u^2 / (n - 1))^(-n / 2)
+  }
+  
+  # Calculate constant c_k
+  calculate_c <- function(n, a) {
+    sqrt(a^2 * n / (n + 1 - a^2))
+  }
+  
+  # Compute the left or right side of the equation
+  compute_expression <- function(n, a) {
+    c <- calculate_c(n - 1, a)
+    integral_value <- integrate(function(u) integral_expr(u, n), lower = 0, upper = c)$value
+    2 / sqrt(pi * (n - 1)) * exp(lgamma(n / 2) - lgamma((n - 1) / 2)) * integral_value
+  }
+  
+  # Define the function for the difference between left and right side
+  difference_function <- function(a) {
+    left_side <- compute_expression(k, a)
+    right_side <- compute_expression(k + 1, a)
+    left_side - right_side
+  }
+  
+  # Define a small epsilon for interval boundaries
+  epsilon <- 1e-2
+  # Check if there is a root within the interval
+  if ((difference_function(epsilon) < 0 && difference_function(sqrt(k) - epsilon) > 0) ||
+      (difference_function(epsilon) > 0 && difference_function(sqrt(k) - epsilon) < 0)) {
+    root <- uniroot(difference_function, interval = c(epsilon, sqrt(k) - epsilon))$root
+  } else {
+    root <- NA
+  }
+  
+  return(root)
+}
+
+# Apply the function to a range of k values
+solutions <- sapply(c(4:25, 100, 500, 1000), function(k) {
+  find_root_of_equation(k)
+})
+solutions
+```
+
+This method also cannot get some values too.
+
+```{r}
+compare <- matrix(c(root,solutions),nrow = 2,byrow = T)
+colnames(compare) <- k_values
+rownames(compare) <- c('Exercise 11.4','Exercise 11.5')
+compare
+```
+
+
+
+
+
+
+
+
+#### Conclusion
+
+From the result above,we find that for almost every $k$(when $k<25$),the root via two different manners is almost same.
+
+### EM-Algorithm
+
+#### Question
+Suppose$T_1,\cdots, T_n$are i.i.d. samples drawn from the
+exponential distribution with expectation$\lambda$. Those values
+greater than$T$are not observed due to right censorship, so that
+the observed values are$Y_i = T_i I(T_i \leq \tau ) + \tau I(T_i > \tau )$,
+$i = 1,\cdots, n$. Suppose$\tau = 1$and the observed$Y_i$values are as
+follows:
+
+0.54, 0.48, 0.33, 0.43, 1.00, 1.00, 0.91, 1.00, 0.21, 0.85
+
+Use the E-M algorithm to estimate$\lambda$, compare your result with
+the observed data MLE (note:$Y_i$follows a mixture
+distribution)
+
+
+
+
+#### Answer
+
+In this problem, we have observed data that is subject to right-censoring at$\tau = 1$. Some of the$T_i$values are completely observed (if$T_i \leq \tau$) and others are censored (if$T_i > \tau$). We can estimate$\lambda$, the mean of the exponential distribution, using the Expectation-Maximization (EM) algorithm, which is well-suited to handle incomplete or censored data.
+
+##### Step 1: Setting up the likelihood function
+
+Given that$T_i \sim \text{Exp}(\lambda)$, the probability density function for$T_i$is:
+$$
+f(t; \lambda) = \frac{1}{\lambda} e^{-t / \lambda}.
+$$
+
+The observed values are:
+$$
+Y_i = T_i I(T_i \leq \tau) + \tau I(T_i > \tau),
+$$
+where$Y_i = T_i$if$T_i \leq \tau$and$Y_i = \tau$if$T_i > \tau$.
+
+The data is thus a mixture of fully observed and censored values:
+1. If$Y_i < \tau$,$Y_i = T_i$, and we observe the exact time.
+2. If$Y_i = \tau$, then$T_i$is censored, and we know only that$T_i > \tau$.
+
+The log-likelihood for the observed data consists of two parts:
+$$
+\log L(\lambda) = \sum_{i \in \text{uncensored}} \log \left(\frac{1}{\lambda} e^{-Y_i / \lambda}\right) + \sum_{i \in \text{censored}} \log \left(\int_\tau^\infty \frac{1}{\lambda} e^{-t / \lambda} \, dt\right).
+$$
+
+The integral term for censored data simplifies to:
+$$
+\int_\tau^\infty \frac{1}{\lambda} e^{-t / \lambda} \, dt = e^{-\tau / \lambda}.
+$$
+
+Thus, the log-likelihood becomes:
+$$
+\log L(\lambda) = -\frac{1}{\lambda} \sum_{i \in \text{uncensored}} Y_i - \frac{1}{\lambda} \cdot \sum_{i \in \text{censored}} \tau - n \log \lambda.
+$$
+
+##### Step 2: E-M Algorithm for$\lambda$
+
+Define:
+1.$U$: the set of indices of uncensored data.
+2.$C$: the set of indices of censored data.
+
+The EM algorithm iteratively estimates$\lambda$as follows:
+
+1. **E-Step**: For each censored observation$Y_i = \tau$, replace the unobserved$T_i$with its conditional expectation given$T_i > \tau$:
+  $$
+   E(T_i | T_i > \tau) = \tau + \lambda.
+  $$
+   Define the complete data sufficient statistic:
+  $$
+   Q(\lambda | \lambda^{(t)}) = \sum_{i \in U} Y_i + \sum_{i \in C} E(T_i | T_i > \tau, \lambda^{(t)}).
+  $$
+
+2. **M-Step**: Maximize the log-likelihood based on the complete data:
+  $$
+   \lambda^{(t+1)} = \frac{\sum_{i \in U} Y_i + \sum_{i \in C} E(T_i | T_i > \tau, \lambda^{(t)})}{n}.
+  $$
+
+This leads to the update:
+$$
+\lambda^{(t+1)} = \frac{\sum_{i \in U} Y_i + \sum_{i \in C} (\tau + \lambda^{(t)})}{n}.
+$$
+
+##### Step 3: Iterative Computation
+
+Let's implement this algorithm in R:
+
+```{r}
+# Observed data
+Y <- c(0.54, 0.48, 0.33, 0.43, 1.00, 1.00, 0.91, 1.00, 0.21, 0.85)
+tau <- 1
+n <- length(Y)
+
+# Initial estimate of lambda
+lambda <- mean(Y)
+tolerance <- 1e-6
+diff <- 1
+max_iter <- 1000
+iter <- 0
+
+# E-M Algorithm
+while (diff > tolerance && iter < max_iter) {
+  lambda_old <- lambda
+  # Separate uncensored and censored observations
+  uncensored <- Y[Y < tau]
+  censored_count <- sum(Y == tau)
+  
+  # E-Step: Expected total for censored values
+  expected_censored_sum <- censored_count * (tau + lambda_old)
+  
+  # M-Step: Update lambda
+  lambda <- (sum(uncensored) + expected_censored_sum) / n
+  
+  # Check for convergence
+  diff <- abs(lambda - lambda_old)
+  iter <- iter + 1
+}
+
+cat("Estimated lambda using EM algorithm:", lambda, "\n")
+```
+
+##### Step 4: Comparison with the MLE
+
+For the observed data, the MLE for$\lambda$can be computed assuming that the$Y_i$values follow a mixture distribution. This requires calculating the MLE separately using the likelihood that considers both observed and censored values directly, without the iterative EM approach.
+
+```{r}
+# Calculate MLE directly for comparison (using uncensored data only)
+lambda_mle <- mean(uncensored) / (1 - censored_count / n)
+
+cat("Observed data MLE for lambda:", lambda_mle, "\n")
+```
+
+#### Conclusion
+
+From the result above,we find that estimated $\lambda$ via EM algorithm is bigger than MLE,which is more reasonable because EM algorithm considers unobserved data at the same time.
+
+
+
+
+
+
+
+
+
+
+## Homework8
+
+
+### Exercises 11.7 
+
+#### Question
+Use the simplex algorithm to solve the following problem. Minimize  $4 x+2 y+9 z$ subject to
+$$
+\begin{array}{l}
+2 x+y+z \leq 2 \\
+x-y+3 z \leq 3 \\
+x \geq 0, y \geq 0, z \geq 0
+\end{array}
+$$
+
+#### Answer
+
+
+
+我们可以利用lpSolve包实现单纯形法来解决线性规划问题。
+
+```{r warning=FALSE}
+# 加载 lpSolve 包
+library(lpSolve)
+```
+
+
+
+```{r}
+
+# 定义目标函数的系数 (Minimize 4x + 2y + 9z)
+objective <- c(4, 2, 9)
+
+# 定义约束矩阵 (左侧系数)
+constraints <- matrix(c(
+  2,  1,  1,  # 2x + y + z <= 2
+  1, -1,  3   # x - y + 3z <= 3
+), nrow = 2, byrow = TRUE)
+
+# 定义约束的右侧值
+rhs <- c(2, 3)
+
+# 定义约束类型
+constraint_directions <- c("<=", "<=")
+
+# 求解线性规划
+solution <- lp("min", objective, constraints, constraint_directions, rhs, 
+               all.int = FALSE) # 确保变量是非负连续的
+
+# 输出结果
+if (solution$status == 0) {
+  cat("Optimal Solution Found:\n")
+  cat("Objective Value (Minimum):", solution$objval, "\n")
+  cat("Values of x, y, z:", solution$solution, "\n")
+} else {
+  cat("No Optimal Solution Found.\n")
+}
+
+```
+
+
+#### Conclusion
+
+从上面的结果可以看出，上面约束问题的最优解为0，在$x=0,y=0,z=0$处取到。
+
+
+### Exercises 3,4,5
+
+#### Question
+
+* Use both for loops and lapply() to fit linear models to the
+mtcars using the formulas stored in this list:
+
+```r
+formulas <- list(
+mpg ~ disp,
+mpg ~ I(1 / disp),
+mpg ~ disp + wt,
+mpg ~ I(1 / disp) + wt
+)
+```
+
+* Fit the model mpg ~ disp to each of the bootstrap replicates
+of mtcars in the list below by using a for loop and lapply().
+Can you do it without an anonymous function?
+
+```r
+bootstraps <- lapply(1:10, function(i) {
+rows <- sample(1:nrow(mtcars), rep = TRUE)
+mtcars[rows, ]
+})
+```
+
+
+* For each model in the previous two exercises, extract $R^2$ using
+the function below.
+
+```r
+rsq <- function(mod) summary(mod)$r.squared
+```
+
+
+#### Answer
+
+
+* Exercise 3
+
+```{r}
+# 加载数据集
+data(mtcars)
+
+# 定义公式列表
+formulas <- list(
+  mpg ~ disp,
+  mpg ~ I(1 / disp),
+  mpg ~ disp + wt,
+  mpg ~ I(1 / disp) + wt
+)
+```
+
+
+```{r}
+# 方法1: 使用 for 循环
+lm_results_for <- list()  # 用于存储结果的列表
+for (i in seq_along(formulas)) {
+  lm_results_for[[i]] <- lm(formulas[[i]], data = mtcars)
+}
+names(lm_results_for) <- paste0("Model_", seq_along(formulas))  # 给结果命名
+print("Results using for loop:")
+print(lm_results_for)
+```
+
+
+
+```{r}
+# 方法2: 使用 lapply 函数
+lm_results_lapply <- lapply(formulas, function(formula) lm(formula, data = mtcars))
+names(lm_results_lapply) <- paste0("Model_", seq_along(formulas))  # 给结果命名
+print("Results using lapply:")
+print(lm_results_lapply)
+```
+
+* Exercise 4
+
+```{r}
+# 引导样本生成
+set.seed(123)  # 确保结果可重复
+bootstraps <- lapply(1:10, function(i) {
+  rows <- sample(1:nrow(mtcars), replace = TRUE)
+  mtcars[rows, ]
+})
+
+```
+
+
+```{r}
+# 初始化存储结果的列表
+lm_results_for <- list()
+
+# 使用 for 循环拟合模型
+for (i in seq_along(bootstraps)) {
+  lm_results_for[[i]] <- lm(mpg ~ disp, data = bootstraps[[i]])
+}
+
+# 检查结果
+print("Results using for loop:")
+print(lm_results_for)
+
+```
+
+
+
+```{r}
+# 定义命名函数用于拟合模型
+fit_model <- function(data) {
+  lm(mpg ~ disp, data = data)
+}
+
+# 使用 lapply 调用命名函数
+lm_results_lapply <- lapply(bootstraps, fit_model)
+
+# 检查结果
+print("Results using lapply:")
+print(lm_results_lapply)
+
+```
+
+* Exercise 5
+
+```{r}
+rsq <- function(mod) summary(mod)$r.squared
+
+```
+
+
+对练习3（多个公式拟合）的$R^2$提取
+```{r}
+# 假设模型列表来自之前的 for 循环 lm_results_for
+r2_for <- numeric(length(lm_results_for))  # 初始化存储 R^2 的向量
+
+for (i in seq_along(lm_results_for)) {
+  r2_for[i] <- rsq(lm_results_for[[i]])
+}
+
+# 输出 R^2 结果
+print("R^2 values using for loop:")
+print(r2_for)
+
+```
+
+```{r}
+# 假设模型列表来自之前的 lapply lm_results_lapply
+r2_lapply <- sapply(lm_results_lapply, rsq)  # sapply 将结果简化为向量
+
+# 输出 R^2 结果
+print("R^2 values using lapply:")
+print(r2_lapply)
+
+```
+
+
+
+
+对练习4(引导样本拟合)进行$R^2$提取
+
+```{r}
+# 假设模型列表来自引导样本的 for 循环 lm_results_for
+bootstrap_r2_for <- numeric(length(lm_results_for))
+
+for (i in seq_along(lm_results_for)) {
+  bootstrap_r2_for[i] <- rsq(lm_results_for[[i]])
+}
+
+# 输出 R^2 结果
+print("Bootstrap R^2 values using for loop:")
+print(bootstrap_r2_for)
+
+```
+
+```{r}
+# 假设模型列表来自引导样本的 lapply lm_results_lapply
+bootstrap_r2_lapply <- sapply(lm_results_lapply, rsq)
+
+# 输出 R^2 结果
+print("Bootstrap R^2 values using lapply:")
+print(bootstrap_r2_lapply)
+
+```
+
+
+
+#### Conclusion
+
+从以上结果可以看出，用函数型循环lapply可以和for循环达到同样的效果，且具有更好的开发效率和运行效率。
+
+
+
+### Excecises 3 and 6 (page 213-214, Advanced R)
+
+#### Question
+
+* The following code simulates the performance of a t-test for
+non-normal data. Use sapply() and an anonymous function
+to extract the p-value from every trial.
+
+```{r}
+trials <- replicate(
+100,
+t.test(rpois(10, 10), rpois(7, 10)),
+simplify = FALSE
+)
+```
+
+* Implement a combination of Map() and vapply() to create an
+lapply() variant that iterates in parallel over all of its inputs
+and stores its outputs in a vector (or a matrix). What argu-
+ments should the function take?
+
+
+#### Answer
+
+* Exercise3
+
+从 trials 列表中提取每次试验的 p 值，可以使用 sapply() 和匿名函数实现:
+
+
+
+
+```{r}
+# 使用 sapply 和匿名函数提取 p 值
+p_values <- sapply(trials, function(trial) trial$p.value)
+
+# 查看结果
+print("Extracted p-values:")
+print(p_values)
+
+```
+
+
+检查结果
+
+```{r}
+# 检查第一个试验的 p 值
+cat("P-value from the first trial:", p_values[1], "\n")
+
+# 检查显著性水平（例如 0.05）的比例
+significant <- mean(p_values < 0.05)
+cat("Proportion of significant p-values (p < 0.05):", significant, "\n")
+
+```
+
+```{r}
+# 绘制 p 值的分布
+hist(p_values, breaks = 20, main = "Distribution of p-values", xlab = "p-value", col = "skyblue")
+
+```
+
+* Exercise6
+
+
+以下是一个结合 Map() 和 vapply() 的自定义函数实现，这个函数可以像 lapply() 一样并行迭代多个输入，并将输出存储为向量或矩阵。
+
+
+```{r}
+parallel_lapply <- function(..., FUN, FUN.VALUE) {
+  # 使用 Map 将多个输入组合成列表
+  inputs <- Map(list, ...)
+  
+  # 使用 vapply 并行应用函数，确保输出为向量或矩阵
+  vapply(inputs, function(args) do.call(FUN, args), FUN.VALUE = FUN.VALUE)
+}
+
+```
+
+
+参数说明
+
+    ...：
+        传入多个并行迭代的输入（如向量、列表等）。
+        
+    FUN：
+        要应用的函数，作用于每组并行输入。
+        
+    FUN.VALUE：
+        用于 vapply() 的模板，指定输出的类型和结构（如 numeric(1) 表示返回单个数值，numeric(2) 表示返回长度为 2 的向量）。
+
+下面举例具体说明下：
+
+实例1：并行加法
+
+```{r}
+# 定义一个加法函数
+add <- function(x, y) x + y
+
+# 使用 parallel_lapply 实现并行加法
+result <- parallel_lapply(1:5, 6:10, FUN = add, FUN.VALUE = numeric(1))
+print(result)  # 输出: [1]  7  9 11 13 15
+
+```
+
+
+实例2：将并行输入组合成矩阵
+```{r}
+# 定义一个组合函数
+combine <- function(x, y) c(x, y)
+
+# 使用 parallel_lapply 并行组合
+result <- parallel_lapply(1:3, 4:6, FUN = combine, FUN.VALUE = numeric(2))
+print(result)
+
+```
+
+#### Conclusion
+
+并行计算可以达到与原来一样的效果且加快运行效率。
+
+### Excecise4 4-5 (page 365, Advanced R)
+
+#### Question
+
+* Make a faster version of chisq.test() that only computes the
+chi-square test statistic when the input is two numeric vectors
+with no missing values. You can try simplifying chisq.test()
+or by coding from the mathematical definition (http://en.
+wikipedia.org/wiki/Pearson%27s_chi-squared_test).
+
+* Can you make a faster version of table() for the case of an input of two integer vectors with no missing values? Can you
+use it to speed up your chi-square test?
+
+#### Answer
+
+* Exercise4
+
+以下是一个加速版的 `chisq.test()` 实现，只计算卡方检验的统计量（$\chi^2$），假设输入为两个没有缺失值的数值向量。
+
+公式定义如下：
+
+$$
+\chi^2 = \sum \frac{(O_i - E_i)^2}{E_i}
+$$
+
+其中：
+- $O_i$ 表示观测值（`observed`）。
+- $E_i$ 表示期望值（`expected`）。
+
+
+
+
+
+```{r}
+# 加速版卡方检验函数
+fast_chisq_test <- function(observed, expected) {
+  # 确保输入是数值向量，且长度一致
+  if (!is.numeric(observed) || !is.numeric(expected)) {
+    stop("输入必须是数值向量。")
+  }
+  if (length(observed) != length(expected)) {
+    stop("观测值和期望值的长度必须一致。")
+  }
+  
+  # 确保没有缺失值
+  if (any(is.na(observed)) || any(is.na(expected))) {
+    stop("输入向量中不能包含缺失值。")
+  }
+  
+  # 计算卡方统计量
+  chi_square_statistic <- sum((observed - expected)^2 / expected)
+  
+  return(chi_square_statistic)
+}
+```
+
+
+
+以下给出几个具体实例：
+
+示例 1：简单计算
+```{r}
+# 定义观测值和期望值
+observed <- c(10, 20, 30, 40)
+expected <- c(12, 18, 35, 35)
+
+# 使用加速版函数计算卡方统计量
+result <- fast_chisq_test(observed, expected)
+print(result)  
+```
+
+
+
+可以使用 R 自带的 `chisq.test()` 来验证结果：
+
+```{r}
+# 使用 chisq.test() 验证
+chisq_result <- chisq.test(x = observed, p = expected / sum(expected), rescale.p = TRUE)
+print(chisq_result$statistic)  # 输出的卡方统计量应该与 fast_chisq_test 一致
+```
+
+
+
+
+* Exercise5
+
+以下是针对两个整数向量输入（没有缺失值）的加速版 `table()` 和基于它的卡方检验实现。这种方法通过直接索引构建列联表，比 R 默认的 `table()` 更高效，并将其用于加速卡方检验。
+
+
+
+
+
+```{r}
+# 针对两个整数向量的快速 table 函数
+fast_table <- function(x, y) {
+  # 确保输入是整数向量并且长度一致
+  if (!is.integer(x) || !is.integer(y)) {
+    stop("两个输入必须是整数向量。")
+  }
+  if (length(x) != length(y)) {
+    stop("两个向量的长度必须一致。")
+  }
+  
+  # 获取 x 和 y 的唯一值
+  x_levels <- unique(x)
+  y_levels <- unique(y)
+  
+  # 初始化列联表
+  contingency_table <- matrix(0, nrow = length(x_levels), ncol = length(y_levels))
+  rownames(contingency_table) <- x_levels
+  colnames(contingency_table) <- y_levels
+  
+  # 填充列联表
+  for (i in seq_along(x)) {
+    row_index <- match(x[i], x_levels)
+    col_index <- match(y[i], y_levels)
+    contingency_table[row_index, col_index] <- contingency_table[row_index, col_index] + 1
+  }
+  
+  return(contingency_table)
+}
+```
+
+
+
+使用示例如下
+
+```{r}
+# 示例输入
+x <- as.integer(c(1, 2, 1, 2, 3, 3, 1, 2))
+y <- as.integer(c(1, 1, 2, 2, 3, 1, 2, 3))
+
+# 计算列联表
+result_table <- fast_table(x, y)
+print(result_table)
+
+```
+
+
+
+以下基于 `fast_table` 来实现快速卡方检验
+
+
+
+```{r}
+# 基于 fast_table 的快速卡方检验
+fast_chisq_test_with_table <- function(x, y) {
+  # 计算列联表
+  contingency_table <- fast_table(x, y)
+  
+  # 计算行和、列和及总数
+  row_totals <- rowSums(contingency_table)
+  col_totals <- colSums(contingency_table)
+  grand_total <- sum(contingency_table)
+  
+  # 计算期望频数
+  expected <- outer(row_totals, col_totals, FUN = "*") / grand_total
+  
+  # 计算卡方统计量
+  chi_square_statistic <- sum((contingency_table - expected)^2 / expected)
+  
+  return(chi_square_statistic)
+}
+```
+
+
+
+使用示例：
+
+```{r}
+# 示例输入
+x <- as.integer(c(1, 2, 1, 2, 3, 3, 1, 2))
+y <- as.integer(c(1, 1, 2, 2, 3, 1, 2, 3))
+
+# 计算卡方统计量
+chisq_result <- fast_chisq_test_with_table(x, y)
+print(chisq_result)
+```
+
+
+
+
+
+#### Conclusion
+
+
+通过使用性能优化，不仅可以得到同样的输出，避免了原来函数通用性开销与一系列检查，大大加快了运行效率。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Homework9
+
+
+### Exercise 9.8
+
+#### Question
+
+This example appears in [40]. Consider the bivariate density
+$$
+f(x, y) \propto\binom{n}{x} y^{x+a-1}(1-y)^{n-x+b-1}, \quad x=0,1, \ldots, n, 0 \leq y \leq 1
+$$
+It can be shown (see e.g. [23]) that for fixed  $a, b, n$, the conditional distributions are  $\operatorname{Binomial}(n, y)$  and  $\operatorname{Beta}(x+a, n-x+b)$ . Use the Gibbs sampler to generate a chain with target joint density  $f(x, y)$ .
+
+
+* Write an Rcpp function for Exercise 9.8.
+* Compare the corresponding generated random numbers with
+those by the R function you wrote using the function “qqplot”.
+* Compare the computation time of the two functions with the
+function “microbenchmark”.
+* Comments your results.
+
+
+#### Answer
+
+
+要用Rcpp编写一个函数来实现以目标联合密度 $f(x, y)$ 为目标的Gibbs采样器，我们可以使用以下步骤：  
+
+1. Gibbs采样的核心是利用条件分布交替抽样，条件分布分别为：
+   - $x \sim \text{Binomial}(n, y)$
+   - $y \sim \text{Beta}(x + a, n - x + b)$
+   
+2. 在Rcpp中，我们可以使用C++标准库的随机数生成器以及Rcpp提供的分布函数（如 `R::rbinom` 和 `R::rbeta`）来实现。
+
+##### Step1:撰写Rcpp函数
+
+```{r}
+library(Rcpp)
+```
+
+
+
+
+
+
+```{r warning=FALSE}
+dir_cpp <- '../src/'
+
+# Can create source file in Rstudio
+sourceCpp(paste0(dir_cpp,"gibbs_sampler.cpp"))
+
+
+# 设置参数
+n <- 10
+a <- 2
+b <- 3
+num_samples <- 5000
+burn_in <- 500
+
+# 调用Gibbs采样函数
+Rcpp_results <- gibbs_sampler(n, a, b, num_samples, burn_in)
+
+Rcpp_results <- data.frame(X = Rcpp_results[,1],Y = Rcpp_results[,2])
+# 检查生成的样本
+head(Rcpp_results)
+
+# 可视化样本
+plot(Rcpp_results[,1], Rcpp_results[,2], main = "Gibbs Sampler Samples", xlab = "x", ylab = "y", pch = 20)
+```
+
+##### Step2:撰写R函数
+
+```{r}
+# Gibbs sampler function
+r_gibbs_sampler <- function(n, a, b ,num_samples, burn_in) {
+  # Initialize vectors to store samples
+  x_samples <- numeric(num_samples)
+  y_samples <- numeric(num_samples)
+
+  # Initial values
+  x_samples[1] <- sample(0:n,1)
+  y_samples[1] <- runif(1)  # Starting with a reasonable value for y
+
+  for (i in 2:num_samples) {
+    # Sample x given y
+    y_current <- y_samples[i - 1]
+    x_samples[i] <- rbinom(1, n, y_current)
+
+    # Sample y given x
+    x_current <- x_samples[i]
+    alpha <- x_current + a
+    beta <- n - x_current + b
+    y_samples[i] <- rbeta(1, alpha, beta)
+  }
+
+  return(data.frame(X = x_samples[-(1:burn_in)], Y = y_samples[-(1:burn_in)]))
+}
+```
+
+```{r}
+R_results <- r_gibbs_sampler(n, a, b, num_samples, burn_in)
+
+# 检查生成的样本
+head(R_results)
+
+# 可视化样本
+plot(R_results[,1], R_results[,2], main = "Gibbs Sampler Samples", xlab = "x", ylab = "y", pch = 20)
+```
+
+##### Step3:使用qqplot比较两种Gibbs采样方法
+
+```{r}
+# Q-Q 图比较
+par(mfrow = c(1, 2)) # 设置图形布局为 1 行 2 列
+qqplot(R_results[, 1], Rcpp_results[, 1], 
+       main = "QQ Plot of R vs Rcpp (X)",,xlab = 'R',ylab = 'Rcpp')
+abline(0, 1, col = "red")
+qqplot(R_results[, 2], Rcpp_results[, 2], 
+       main = "QQ Plot of R vs Rcpp (Y)",,xlab = 'R',ylab = 'Rcpp')
+abline(0, 1, col = "blue")
+```
+
+从上面的Q-Q图可以看出，图上的点接近对角线，说明用R函数和Rcpp产生的随机数分布一致。
+
+
+##### Step4:比较两种方式的计算时间
+```{r}
+# 性能比较
+library(microbenchmark)
+ts <- microbenchmark(gibbsR=r_gibbs_sampler(n, a, b, num_samples, burn_in),gibbsRcpp=gibbs_sampler(n, a, b, num_samples, burn_in))
+summary(ts)[,c(1,3,5,6)]
+```
+
+从上面的结果可以看出，Rcpp撰写的Gibbs抽样算法具有更快的运行速度。
+
+
+#### Conclusion
+
+##### Step5:对上面的结果给出总结
+
+* Rcpp与R相比在效果上区别不大，都可以很好的完成任务
+* Rcpp与R相比具有更快的运行速度，如在本例中其速度接近R函数的10倍
+* Rcpp的开发成本更高，一般撰写比R函数更加困难一些
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
