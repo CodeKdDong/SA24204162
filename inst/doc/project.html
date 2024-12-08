@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="SA24204162" />
+
+
+<title>Statistical Computing Project</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Statistical Computing Project</h1>
+<h4 class="author">SA24204162</h4>
+<h4 class="date">2024-12-5</h4>
+
+
+
+<div id="项目背景" class="section level2">
+<h2>项目背景</h2>
+<p>Representation
+MTL已经在实际中运用的十分广泛了，目前大多数的工作都是用距离或者角度来刻画相似性。但是一般来说，随着任务的增加，假设所有的任务具有类似的角度或者距离一般会忽略很多信息，所以我们这个项目提出了一种新的表示学习方法刻画相似性，并使用谱算法实现系数的估计。</p>
+<p>这个项目主要是复现某一个最近在arxiv的文章，据我了解，目前该文章还没有任何开源的R代码，同时我们将这个MTL的方法应用到了迁移学习中。</p>
+</div>
+<div id="模型设定" class="section level2">
+<h2>模型设定</h2>
+<ul>
+<li>假设有T个任务，并且对应第t个任务的数据集是<span class="math inline">\(\{x_i^{(t)},y_{i}^{(t)}\}_{i=1}^n\)</span>，<span class="math inline">\(t\in [T],s.t \quad t\in [T]\)</span></li>
+</ul>
+<p><span class="math display">\[y_{i}^{(t)}=\left(\boldsymbol{x}_{i}^{(t)}\right)^{\top}
+\boldsymbol{\beta}^{(t) *}+\epsilon_{i}^{(t)}, \quad i=1: n,\]</span>
+在上面的模型中，回归系数$ ^{(t) <em>}=^{(t) </em>} ^{(t) *}$ <span class="math inline">\(\boldsymbol{A}^{(t) *} \in \mathcal{O}^{p \times
+r}=\{\boldsymbol{A} \in \left.\mathbb{R}^{p \times r}:
+\boldsymbol{A}^{\top}
+\boldsymbol{A}=\boldsymbol{I}_{r}\right\}\)</span>,<span class="math inline">\(\{\epsilon_{i}^{(t)}\}_{i=1}^{n}\)</span>是随机误差
+<span class="math inline">\(\mathbf{\theta^{(t)*}}\in
+\mathbb{R}^r\)</span>即为低维表示，<span class="math inline">\(r\)</span>一般小于<span class="math inline">\(p\)</span></p>
+<p>我们上面已经假设了不同任务的回归系数具有不同的结构，但是为了能够有效的学习，我们要让这种不同限制在一定的范围内，具体地，我们给出了以下限制
+<span class="math display">\[\min _{\overline{\boldsymbol{A}} \in
+\mathcal{O}^{p \times r}} \max _{t \in S}\left\|\boldsymbol{A}^{(t)
+*}\left(\boldsymbol{A}^{(t)
+*}\right)^{\top}-\overline{\boldsymbol{A}}(\overline{\boldsymbol{A}})^{\top}\right\|_{2}
+\leq h,\]</span> 上面的h就是对相似度的一种度量。</p>
+</div>
+<div id="算法描述" class="section level2">
+<h2>算法描述</h2>
+<div id="谱算法" class="section level3">
+<h3>谱算法</h3>
+<div id="已知r" class="section level4">
+<h4>已知r</h4>
+<p>Input: Data <span class="math inline">\(\left\{\boldsymbol{X}^{(t)},
+\boldsymbol{Y}^{(t)}\right\}_{t=1}^{T}=\left\{\left\{\boldsymbol{x}_{i}^{(t)},
+y_{i}^{(t)}\right\}_{i=1}^{n}\right\}_{t=1}^{T}\)</span> , penalty
+parameter <span class="math inline">\(\gamma\)</span> , an upper bound
+<span class="math inline">\(\bar{\epsilon}\)</span> (for <span class="math inline">\(\epsilon\)</span> ), intrinsic dimension <span class="math inline">\(r\)</span></p>
+<p>Output: Estimators <span class="math inline">\(\left\{\widehat{\boldsymbol{\beta}}^{(t)}\right\}_{t=1}^{T},
+\widehat{\overline{\boldsymbol{A}}}\)</span></p>
+<p>Step 1: (Single-task regression) $^{(t)}=_{ <sup>{d}}{f</sup>{(t)}()}
+for t $</p>
+<p>Step 2: (Projection and concatenation) Create a <span class="math inline">\(p \times T\)</span> matrix <span class="math inline">\(\widehat{\boldsymbol{B}}\)</span> of which the t
+-th column is <span class="math inline">\(\prod_{R}\left(\widetilde{\boldsymbol{\beta}}^{(t)}\right)\)</span>
+, where R= quantile <span class="math inline">\(\left(\left\{\left\|\widetilde{\boldsymbol{\beta}}^{(t)}\right\|_{2}\right\}_{t=1}^{T},
+1-\bar{\epsilon}\right)\)</span></p>
+<p>Step 3: (SVD) Conduct SVD <span class="math inline">\(\widehat{\boldsymbol{B}}=\widehat{\boldsymbol{U}}
+\widehat{\boldsymbol{\Lambda}} \widehat{\boldsymbol{V}}^{\top}\)</span>
+with <span class="math inline">\(\widehat{\boldsymbol{U}} \in
+\mathcal{O}^{p \times T}\)</span> , let <span class="math inline">\(\widehat{\overline{\boldsymbol{A}}}\)</span> be
+the first <span class="math inline">\(r\)</span> columns of <span class="math inline">\(\widehat{\boldsymbol{U}}\)</span> and set <span class="math inline">\(\widehat{\boldsymbol{\theta}}^{(t)}=\arg \min
+_{\boldsymbol{\theta} \in \mathbb{R}^{r}}
+f^{(t)}(\hat{\overline{\boldsymbol{A}}}
+\boldsymbol{\theta})\)</span></p>
+<p>Step 4: (Biased regularization) <span class="math inline">\(\widehat{\boldsymbol{\beta}}^{(t)}=\arg \min
+_{\boldsymbol{\beta} \in
+\mathbb{R}^{p}}\left\{f^{(t)}(\boldsymbol{\beta})+\frac{\gamma}{\sqrt{n}}\left\|\boldsymbol{\beta}-\hat{\overline{\boldsymbol{A}}}
+\widehat{\boldsymbol{\theta}}^{(t)}\right\|_{2}\right\}  for  \overline{t
+\in[T]}\)</span> #### 未知r</p>
+<p>Algorithm:Adaptation to unknown intrinsic dimension r</p>
+<p>Input: Data <span class="math inline">\(\left\{\boldsymbol{X}^{(t)},
+\boldsymbol{Y}^{(t)}\right\}_{t=1}^{T}=\left\{\left\{\boldsymbol{x}_{i}^{(t)},
+y_{i}^{(t)}\right\}_{i=1}^{n}\right\}_{t=1}^{T}\)</span> , penalty
+parameter <span class="math inline">\(\gamma\)</span> , an upper bound
+<span class="math inline">\(\bar{\epsilon}\)</span> (for <span class="math inline">\(\epsilon\)</span> ), thresholding parameters <span class="math inline">\(T_1,T_2\)</span></p>
+<p>Output: An estimate <span class="math inline">\(\hat{r}\)</span> Step
+1: (Single-task regression) $^{(t)}=_{ <sup>{d}}{f</sup>{(t)}()} for t
+$</p>
+<p>Step 2: (Projection and concatenation) Create a <span class="math inline">\(p \times T\)</span> matrix <span class="math inline">\(\widehat{\boldsymbol{B}}\)</span> of which the t
+-th column is <span class="math inline">\(\prod_{R}\left(\widetilde{\boldsymbol{\beta}}^{(t)}\right)\)</span>
+, where R= quantile <span class="math inline">\(\left(\left\{\left\|\widetilde{\boldsymbol{\beta}}^{(t)}\right\|_{2}\right\}_{t=1}^{T},
+1-\bar{\epsilon}\right)\)</span></p>
+<p>Step3:(Thresholding) Set <span class="math inline">\(\hat{r}=\max
+\left\{r^{\prime} \in[T]: \sigma_{r^{\prime}}(\widehat{\boldsymbol{B}} /
+\sqrt{T}) \geq T_{1} \sqrt{\frac{p+\log T}{n}}+T_{2} R
+\sqrt{\bar{\epsilon}}\right\}\)</span></p>
+<p>估计得到<span class="math inline">\(\hat{r}\)</span>之后，代入已知r的谱算法即可得到线性系数的估计</p>
+</div>
+<div id="迁移学习应用" class="section level4">
+<h4>迁移学习应用</h4>
+<p>Algorithm 4: Transferring to new tasks</p>
+<p>Input: Data from a new task <span class="math inline">\(\left(\boldsymbol{X}^{(0)}\)</span>, <span class="math inline">\(\boldsymbol{Y}^{(0)}\right)=\left\{\boldsymbol{x}_{i}^{(0)},
+y_{i}^{(0)}\right\}_{i=1}^{n_{0}}\)</span> , estimator <span class="math inline">\(\widehat{\overline{\boldsymbol{A}}}\)</span> from
+Spectral Method, penalty parameter <span class="math inline">\(\gamma\)</span></p>
+<p>Output: Estimator <span class="math inline">\(\widehat{\boldsymbol{\beta}}^{(0)}\)</span></p>
+<p>Step 1: <span class="math inline">\(\widehat{\boldsymbol{\theta}}^{(0)}=\arg \min
+_{\boldsymbol{\theta} \in
+\mathbb{R}^{r}}\left\{f^{(0)}(\hat{\overline{\boldsymbol{A}}
+\boldsymbol{\theta}})\right\}\)</span></p>
+<p>Step 2:<span class="math inline">\(\widehat{\boldsymbol{\beta}}^{(0)}=\arg \min
+_{\boldsymbol{\beta} \in
+\mathbb{R}^{p}}\left\{f^{(0)}(\boldsymbol{\beta})+\frac{\gamma}{\sqrt{n_{0}}}\left\|\boldsymbol{\beta}-\widehat{\overline{\boldsymbol{A}}}
+\widehat{\boldsymbol{\theta}}^{(0)}\right\|_{2}\right\}\)</span></p>
+</div>
+</div>
+<div id="monte-carlo-simulation" class="section level3">
+<h3>Monte Carlo simulation</h3>
+<ul>
+<li>DGP:</li>
+</ul>
+<ol style="list-style-type: decimal">
+<li><strong>Input Matrix Generation:</strong>
+<ul>
+<li>For each time step <span class="math inline">\(t\in[T]\)</span>,
+generate <span class="math inline">\(x(t)\)</span> as i.i.d. random
+samples from a multivariate normal distribution: <span class="math display">\[
+x(t) \sim \mathcal{N}(0, I_p)
+\]</span> where <span class="math inline">\(I_p\)</span> is the identity
+matrix of size <span class="math inline">\(p\times p\)</span>.</li>
+</ul></li>
+<li><strong>Noise Generation:</strong>
+<ul>
+<li>Generate <span class="math inline">\(\epsilon(t)\)</span> as i.i.d.
+random samples from a normal distribution: <span class="math display">\[
+\epsilon(t)\sim \mathcal{N}(0, 1)
+\]</span></li>
+</ul></li>
+<li><strong>Matrix <span class="math inline">\(C\)</span>
+Generation:</strong>
+<ul>
+<li><span class="math inline">\(C\)</span> is a random <span class="math inline">\(p\times r\)</span> matrix where each entry is
+independently sampled from a standard normal distribution, i.e., each
+element of <span class="math inline">\(C\sim \mathcal{N}(0,
+1)\)</span>.</li>
+</ul></li>
+<li><strong>Left Singular Matrix <span class="math inline">\(A\)</span>:</strong>
+<ul>
+<li>Define <span class="math inline">\(A\)</span> as the first <span class="math inline">\(r\)</span> columns of the left singular matrix of
+<span class="math inline">\(C\)</span>.</li>
+</ul></li>
+<li><strong>Matrix <span class="math inline">\(eA(t)\)</span>
+Definition:</strong>
+<ul>
+<li>Define <span class="math inline">\(eA(t)\)</span> as: <span class="math display">\[
+eA(t) = A + a(t) \begin{pmatrix} I_r \\ 0_{r \times (p - r)}
+\end{pmatrix}
+\]</span> where <span class="math inline">\(a(t)\)</span> is i.i.d.
+sampled from <span class="math inline">\(\text{Unif}([-h,
+h])\)</span>.</li>
+</ul></li>
+<li><strong>Matrix <span class="math inline">\(A(t)^{*}\)</span>:</strong>
+<ul>
+<li>Define the pseudo-inverse of <span class="math inline">\(eA(t)\)</span> as: <span class="math display">\[
+A(t)^* = eA(t) \left( (eA(t))^\top eA(t) \right)^{-1} (eA(t))^\top
+\]</span> where <span class="math inline">\(A(t)^*\)</span> is the
+Moore-Penrose pseudo-inverse of <span class="math inline">\(eA(t)\)</span>.</li>
+</ul></li>
+<li><strong>Parameter <span class="math inline">\(\theta(t)^*\)</span>
+Generation:</strong>
+<ul>
+<li>For each time step $ t$, generate the parameters <span class="math inline">\(\theta(t)^* \in \mathbb{R}^r\)</span>
+independently from <span class="math inline">\(\text{Unif}([-2,
+2])\)</span>.</li>
+</ul></li>
+</ol>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(SA24204162)</span></code></pre></div>
+<pre><code>## 
+## Attaching package: &#39;SA24204162&#39;</code></pre>
+<pre><code>## The following object is masked _by_ &#39;.GlobalEnv&#39;:
+## 
+##     gibbs_sampler</code></pre>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">library</span>(Rcpp)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="fu">library</span>(RcppArmadillo)</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>dir_cpp <span class="ot">&lt;-</span> <span class="st">&#39;../src/&#39;</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co"># Can create source file in Rstudio</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="fu">sourceCpp</span>(<span class="fu">paste0</span>(dir_cpp,<span class="st">&quot;Grouplasso.cpp&quot;</span>))</span></code></pre></div>
+<pre><code>## Warning in normalizePath(path.expand(path), winslash, mustWork):
+## path[1]=&quot;D:/Codefield/Code_R/Rpackage/SA24204162/src/../inst/include&quot;:
+## 系统找不到指定的路径。</code></pre>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># parametric settings</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">150</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="dv">80</span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>T <span class="ot">&lt;-</span> <span class="dv">10</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>r <span class="ot">&lt;-</span> <span class="dv">10</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>h <span class="ot">&lt;-</span> <span class="fl">0.5</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>epsilon_bar <span class="ot">&lt;-</span> <span class="fl">0.1</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>gamma <span class="ot">=</span> <span class="dv">1</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">generate_data</span>(n, p, T, r, h, epsilon_bar)</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>data_target <span class="ot">&lt;-</span> <span class="fu">generate_data</span>(n, p, <span class="dv">1</span>, r, h, epsilon_bar)</span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a></span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a><span class="co"># Spectral Method</span></span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>beta_final_spectral <span class="ot">&lt;-</span> <span class="fu">Spectral_Method_kr</span>(data<span class="sc">$</span>X, data<span class="sc">$</span>Y, T, r, epsilon_bar, <span class="at">gamma =</span> <span class="dv">1</span>)</span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a></span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a></span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a><span class="co"># 调用 Rcpp 函数计算 beta</span></span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a><span class="co"># 将 X 重塑为二维矩阵 (n * T, p)</span></span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a>X_matrix <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="cn">NA</span>, <span class="at">nrow =</span> n <span class="sc">*</span> T, <span class="at">ncol =</span> p)</span>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a><span class="cf">for</span> (t <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>T) {</span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a>  X_matrix[((t <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">*</span> n <span class="sc">+</span> <span class="dv">1</span>)<span class="sc">:</span>(t <span class="sc">*</span> n), ] <span class="ot">&lt;-</span> data<span class="sc">$</span>X[, , t]  <span class="co"># 这里要确保X_matrix正确赋值</span></span>
+<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a>}</span>
+<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a></span>
+<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a></span>
+<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a><span class="co"># Group Lasso (using the custom C++ function)</span></span>
+<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a>lambda <span class="ot">&lt;-</span> <span class="fl">0.1</span>  <span class="co"># Regularization parameter for Group Lasso</span></span>
+<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a>beta_group_lasso <span class="ot">&lt;-</span> <span class="fu">groupLasso</span>(X_matrix, data<span class="sc">$</span>Y, lambda, T, n, p)</span>
+<span id="cb7-27"><a href="#cb7-27" tabindex="-1"></a></span>
+<span id="cb7-28"><a href="#cb7-28" tabindex="-1"></a><span class="co"># Compute L2 Loss for Spectral Method</span></span>
+<span id="cb7-29"><a href="#cb7-29" tabindex="-1"></a>beta_true <span class="ot">&lt;-</span> data<span class="sc">$</span>beta  <span class="co"># True beta values from the model</span></span></code></pre></div>
+<div id="r的估计" class="section level4">
+<h4>r的估计</h4>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>r_hat <span class="ot">&lt;-</span> <span class="fu">r_estimation</span>(data<span class="sc">$</span>Y,data<span class="sc">$</span>X,T,epsilon_bar)</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>r_hat</span></code></pre></div>
+<pre><code>## [1] 10</code></pre>
+<p><strong>可以看到r的估计是非常准确的。</strong></p>
+</div>
+<div id="模型性能比较" class="section level4">
+<h4>模型性能比较</h4>
+<ul>
+<li>Bechmark:Group-Lasso</li>
+</ul>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>l2_loss <span class="ot">&lt;-</span> <span class="cf">function</span>(x,y){</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">min</span>(<span class="fu">mean</span>((x<span class="sc">-</span>y)<span class="sc">^</span><span class="dv">2</span>),<span class="dv">1</span>))</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>loss_beta <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="cf">for</span>(t <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>T){</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  beta_true[[t]] <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(beta_true[[t]])</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  loss_beta <span class="ot">&lt;-</span> <span class="fu">l2_loss</span>(beta_true[[t]],beta_final_spectral[[t]]) <span class="sc">+</span> loss_beta</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>}</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>loss_beta<span class="sc">/</span>T</span></code></pre></div>
+<pre><code>## [1] 0.01338846</code></pre>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>loss_lasso <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="cf">for</span>(t <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>T){</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  beta_true[[t]] <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(beta_true[[t]])</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>  loss_lasso <span class="ot">&lt;-</span> <span class="fu">l2_loss</span>(beta_true[[t]],beta_group_lasso[,t]) <span class="sc">+</span> loss_lasso</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>}</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>loss_lasso<span class="sc">/</span>T</span></code></pre></div>
+<pre><code>## [1] 0.7608637</code></pre>
+<p><strong>可以从l2-loss中看出,Spectral
+Method是优于Group-Lasso的。</strong></p>
+</div>
+<div id="迁移性能" class="section level4">
+<h4>迁移性能</h4>
+<ul>
+<li>n=100,p=10</li>
+</ul>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">generate_data</span>(<span class="dv">100</span>, <span class="dv">10</span>, T, r, h, epsilon_bar)</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>data_target <span class="ot">&lt;-</span> <span class="fu">generate_data</span>(<span class="dv">100</span>, <span class="dv">10</span>, <span class="dv">1</span>, r, h, epsilon_bar)</span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a>X_target <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(data_target<span class="sc">$</span>X[,,<span class="dv">1</span>])</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>Y_target <span class="ot">&lt;-</span> <span class="fu">as.vector</span>(data_target<span class="sc">$</span>Y)</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a>beta0 <span class="ot">&lt;-</span> <span class="fu">TransRL_Spectral</span>(data<span class="sc">$</span>X,data<span class="sc">$</span>Y,X_target,Y_target,T,epsilon_bar,gamma,<span class="at">T1=</span><span class="fl">0.5</span>,<span class="at">T2=</span><span class="fl">0.25</span>)</span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a><span class="fu">l2_loss</span>(beta0,data_target<span class="sc">$</span>beta[[<span class="dv">1</span>]])</span></code></pre></div>
+<pre><code>## [1] 0.02288095</code></pre>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>beta_ls <span class="ot">&lt;-</span> <span class="fu">lm</span>(Y_target <span class="sc">~</span> X_target <span class="sc">-</span> <span class="dv">1</span>)<span class="sc">$</span>coefficients  </span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a><span class="fu">l2_loss</span>(beta_ls,data_target<span class="sc">$</span>beta[[<span class="dv">1</span>]])</span></code></pre></div>
+<pre><code>## [1] 0.022896</code></pre>
+<ul>
+<li>n=100,p=80</li>
+</ul>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">generate_data</span>(<span class="dv">100</span>, <span class="dv">80</span>, T, r, h, epsilon_bar)</span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>data_target <span class="ot">&lt;-</span> <span class="fu">generate_data</span>(<span class="dv">100</span>, <span class="dv">80</span>, <span class="dv">1</span>, r, h, epsilon_bar)</span></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a>X_target <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(data_target<span class="sc">$</span>X[,,<span class="dv">1</span>])</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a></span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a>Y_target <span class="ot">&lt;-</span> <span class="fu">as.vector</span>(data_target<span class="sc">$</span>Y)</span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a>beta0 <span class="ot">&lt;-</span> <span class="fu">TransRL_Spectral</span>(data<span class="sc">$</span>X,data<span class="sc">$</span>Y,X_target,Y_target,T,epsilon_bar,gamma,<span class="at">T1=</span><span class="fl">0.5</span>,<span class="at">T2=</span><span class="fl">0.25</span>)</span>
+<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a><span class="fu">l2_loss</span>(beta0,data_target<span class="sc">$</span>beta[[<span class="dv">1</span>]])</span></code></pre></div>
+<pre><code>## [1] 0.03378347</code></pre>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a>beta_ls <span class="ot">&lt;-</span> <span class="fu">lm</span>(Y_target <span class="sc">~</span> X_target <span class="sc">-</span> <span class="dv">1</span>)<span class="sc">$</span>coefficients  </span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a><span class="fu">l2_loss</span>(beta_ls,data_target<span class="sc">$</span>beta[[<span class="dv">1</span>]])</span></code></pre></div>
+<pre><code>## [1] 0.03378347</code></pre>
+<p>可以看到在维度较低时，该方法具有正向迁移效果，但是维度很高时没有，但是正如文章理论证明的一样，该方法始终可以保持没有负迁移。</p>
+</div>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

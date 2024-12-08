@@ -1,0 +1,20 @@
+Package: SA24204162
+Type: Package
+Title: Statistical Computing Project
+Version: 1.0
+Date: 2024-12-04
+Author: Wang Kaidong
+Maintainer: Wang Kaidong <1730150799@qq.com>
+Description: Several R and Rcpp function are included in this package for illustration. 
+License: GPL (>= 2)
+Imports:
+    Rcpp,
+    RcppArmadillo
+LinkingTo: Rcpp, RcppArmadillo
+RoxygenNote: 7.3.2
+Encoding: UTF-8
+Suggests: knitr, rmarkdown
+VignetteBuilder: knitr
+URL: http://github.com/CodeKdDong/SA24204162
+BugReports: http://github.com/CodeKdDong/SA24204162/issues
+

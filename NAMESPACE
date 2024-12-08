@@ -1,0 +1,5 @@
+useDynLib(SA24204162, .registration=TRUE)
+importFrom(Rcpp, evalCpp)
+import(RcppArmadillo)
+importFrom(stats, lm, optim, quantile, rnorm, runif)
+exportPattern("^[[:alpha:]]+")

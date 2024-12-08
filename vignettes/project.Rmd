@@ -1,0 +1,316 @@
+---
+title: "Statistical Computing Project"
+author: "SA24204162"
+date: "2024-12-5"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Statistical Computing Project}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+## 项目背景
+
+Representation MTL已经在实际中运用的十分广泛了，目前大多数的工作都是用距离或者角度来刻画相似性。但是一般来说，随着任务的增加，假设所有的任务具有类似的角度或者距离一般会忽略很多信息，所以我们这个项目提出了一种新的表示学习方法刻画相似性，并使用谱算法实现系数的估计。
+
+这个项目主要是复现某一个最近在arxiv的文章，据我了解，目前该文章还没有任何开源的R代码，同时我们将这个MTL的方法应用到了迁移学习中。
+
+## 模型设定
+
+- 假设有T个任务，并且对应第t个任务的数据集是$\{x_i^{(t)},y_{i}^{(t)}\}_{i=1}^n$，$t\in [T],s.t \quad t\in [T]$
+
+$$y_{i}^{(t)}=\left(\boldsymbol{x}_{i}^{(t)}\right)^{\top} \boldsymbol{\beta}^{(t) *}+\epsilon_{i}^{(t)}, \quad i=1: n,$$
+在上面的模型中，回归系数$ \boldsymbol{\beta}^{(t) *}=\boldsymbol{A}^{(t) *} \boldsymbol{\theta}^{(t) *}$ $\boldsymbol{A}^{(t) *} \in \mathcal{O}^{p \times r}=\{\boldsymbol{A} \in \left.\mathbb{R}^{p \times r}: \boldsymbol{A}^{\top} \boldsymbol{A}=\boldsymbol{I}_{r}\right\}$,$\{\epsilon_{i}^{(t)}\}_{i=1}^{n}$是随机误差
+$\mathbf{\theta^{(t)*}}\in \mathbb{R}^r$即为低维表示，$r$一般小于$p$
+
+ 我们上面已经假设了不同任务的回归系数具有不同的结构，但是为了能够有效的学习，我们要让这种不同限制在一定的范围内，具体地，我们给出了以下限制
+$$\min _{\overline{\boldsymbol{A}} \in \mathcal{O}^{p \times r}} \max _{t \in S}\left\|\boldsymbol{A}^{(t) *}\left(\boldsymbol{A}^{(t) *}\right)^{\top}-\overline{\boldsymbol{A}}(\overline{\boldsymbol{A}})^{\top}\right\|_{2} \leq h,$$
+上面的h就是对相似度的一种度量。
+
+## 算法描述
+
+### 谱算法
+
+#### 已知r
+
+Input: Data  $\left\{\boldsymbol{X}^{(t)}, \boldsymbol{Y}^{(t)}\right\}_{t=1}^{T}=\left\{\left\{\boldsymbol{x}_{i}^{(t)}, y_{i}^{(t)}\right\}_{i=1}^{n}\right\}_{t=1}^{T}$ , penalty parameter  $\gamma$ , an upper bound  $\bar{\epsilon}$  (for  $\epsilon$  ), intrinsic dimension  $r$
+
+Output: Estimators  $\left\{\widehat{\boldsymbol{\beta}}^{(t)}\right\}_{t=1}^{T}, \widehat{\overline{\boldsymbol{A}}}$
+
+Step 1: (Single-task regression)  $\widetilde{\boldsymbol{\beta}}^{(t)}=\arg \min _{\boldsymbol{\beta} \in \mathbb{R}^{d}}\left\{f^{(t)}(\boldsymbol{\beta})\right\}  for  t \in[T] $
+
+Step 2: (Projection and concatenation) Create a  $p \times T$  matrix  $\widehat{\boldsymbol{B}}$  of which the  t -th column is  $\prod_{R}\left(\widetilde{\boldsymbol{\beta}}^{(t)}\right)$ , where  R=  quantile  $\left(\left\{\left\|\widetilde{\boldsymbol{\beta}}^{(t)}\right\|_{2}\right\}_{t=1}^{T}, 1-\bar{\epsilon}\right)$  
+
+
+Step 3: (SVD) Conduct SVD  $\widehat{\boldsymbol{B}}=\widehat{\boldsymbol{U}} \widehat{\boldsymbol{\Lambda}} \widehat{\boldsymbol{V}}^{\top}$  with  $\widehat{\boldsymbol{U}} \in \mathcal{O}^{p \times T}$ , let  $\widehat{\overline{\boldsymbol{A}}}$  be the first  $r$    columns of  $\widehat{\boldsymbol{U}}$ and set $\widehat{\boldsymbol{\theta}}^{(t)}=\arg \min _{\boldsymbol{\theta} \in \mathbb{R}^{r}} f^{(t)}(\hat{\overline{\boldsymbol{A}}} \boldsymbol{\theta})$  
+
+Step 4: (Biased regularization)  $\widehat{\boldsymbol{\beta}}^{(t)}=\arg \min _{\boldsymbol{\beta} \in \mathbb{R}^{p}}\left\{f^{(t)}(\boldsymbol{\beta})+\frac{\gamma}{\sqrt{n}}\left\|\boldsymbol{\beta}-\hat{\overline{\boldsymbol{A}}} \widehat{\boldsymbol{\theta}}^{(t)}\right\|_{2}\right\}  for  \overline{t \in[T]}$ 
+#### 未知r
+
+
+Algorithm:Adaptation to unknown intrinsic dimension  r 
+
+Input: Data  $\left\{\boldsymbol{X}^{(t)}, \boldsymbol{Y}^{(t)}\right\}_{t=1}^{T}=\left\{\left\{\boldsymbol{x}_{i}^{(t)}, y_{i}^{(t)}\right\}_{i=1}^{n}\right\}_{t=1}^{T}$ , penalty parameter  $\gamma$ , an upper bound  $\bar{\epsilon}$  (for  $\epsilon$  ), thresholding parameters $T_1,T_2$
+
+
+Output: An estimate  $\hat{r}$ 
+    Step 1: (Single-task regression)  $\widetilde{\boldsymbol{\beta}}^{(t)}=\arg \min _{\boldsymbol{\beta} \in \mathbb{R}^{d}}\left\{f^{(t)}(\boldsymbol{\beta})\right\}  for  t \in[T] $
+
+Step 2: (Projection and concatenation) Create a  $p \times T$  matrix  $\widehat{\boldsymbol{B}}$  of which the  t -th column is  $\prod_{R}\left(\widetilde{\boldsymbol{\beta}}^{(t)}\right)$ , where  R=  quantile  $\left(\left\{\left\|\widetilde{\boldsymbol{\beta}}^{(t)}\right\|_{2}\right\}_{t=1}^{T}, 1-\bar{\epsilon}\right)$  
+
+Step3:(Thresholding) Set  $\hat{r}=\max \left\{r^{\prime} \in[T]: \sigma_{r^{\prime}}(\widehat{\boldsymbol{B}} / \sqrt{T}) \geq T_{1} \sqrt{\frac{p+\log T}{n}}+T_{2} R \sqrt{\bar{\epsilon}}\right\}$ 
+
+估计得到$\hat{r}$之后，代入已知r的谱算法即可得到线性系数的估计
+
+
+#### 迁移学习应用
+
+Algorithm 4: Transferring to new tasks
+
+Input: Data from a new task  $\left(\boldsymbol{X}^{(0)}$, $\boldsymbol{Y}^{(0)}\right)=\left\{\boldsymbol{x}_{i}^{(0)}, y_{i}^{(0)}\right\}_{i=1}^{n_{0}}$ , estimator  $\widehat{\overline{\boldsymbol{A}}}$  from
+            Spectral Method, penalty parameter  $\gamma$
+            
+Output: Estimator  $\widehat{\boldsymbol{\beta}}^{(0)}$
+
+Step 1: $\widehat{\boldsymbol{\theta}}^{(0)}=\arg \min _{\boldsymbol{\theta} \in \mathbb{R}^{r}}\left\{f^{(0)}(\hat{\overline{\boldsymbol{A}} \boldsymbol{\theta}})\right\}$ 
+
+Step 2:$\widehat{\boldsymbol{\beta}}^{(0)}=\arg \min _{\boldsymbol{\beta} \in \mathbb{R}^{p}}\left\{f^{(0)}(\boldsymbol{\beta})+\frac{\gamma}{\sqrt{n_{0}}}\left\|\boldsymbol{\beta}-\widehat{\overline{\boldsymbol{A}}} \widehat{\boldsymbol{\theta}}^{(0)}\right\|_{2}\right\}$ 
+
+### Monte Carlo simulation
+
+
+
+
+* DGP:
+
+
+1. **Input Matrix Generation:**
+   - For each time step $t\in[T]$, generate $x(t)$ as i.i.d. random samples from a multivariate normal distribution: 
+     $$
+     x(t) \sim \mathcal{N}(0, I_p)
+     $$
+     where $I_p$ is the identity matrix of size $p\times p$.
+
+2. **Noise Generation:**
+   - Generate $\epsilon(t)$ as i.i.d. random samples from a normal distribution:
+     $$
+     \epsilon(t)\sim \mathcal{N}(0, 1)
+     $$
+
+3. **Matrix $C$ Generation:**
+   - $C$ is a random $p\times r$ matrix where each entry is independently sampled from a standard normal distribution, i.e., each element of $C\sim \mathcal{N}(0, 1)$.
+
+4. **Left Singular Matrix $A$:**
+   - Define $A$ as the first $r$ columns of the left singular matrix of $C$.
+   
+5. **Matrix $eA(t)$ Definition:**
+   - Define $eA(t)$ as:
+     $$
+     eA(t) = A + a(t) \begin{pmatrix} I_r \\ 0_{r \times (p - r)} \end{pmatrix}
+     $$
+     where $a(t)$ is i.i.d. sampled from $\text{Unif}([-h, h])$.
+
+6. **Matrix $A(t)^{*}$:**
+   - Define the pseudo-inverse of $eA(t)$ as:
+     $$
+     A(t)^* = eA(t) \left( (eA(t))^\top eA(t) \right)^{-1} (eA(t))^\top
+     $$
+     where $A(t)^*$ is the Moore-Penrose pseudo-inverse of $eA(t)$.
+
+7. **Parameter $\theta(t)^*$ Generation:**
+   - For each time step $ t\in [T]$, generate the parameters $\theta(t)^* \in \mathbb{R}^r$ independently from $\text{Unif}([-2, 2])$.
+
+
+
+```{r}
+library(SA24204162)
+library(Rcpp)
+library(RcppArmadillo)
+```
+
+
+
+```{r}
+dir_cpp <- '../src/'
+
+# Can create source file in Rstudio
+sourceCpp(paste0(dir_cpp,"Grouplasso.cpp"))
+
+```
+
+
+```{r}
+# parametric settings
+n <- 150
+p <- 80
+T <- 10
+r <- 10
+h <- 0.5
+epsilon_bar <- 0.1
+gamma = 1
+data <- generate_data(n, p, T, r, h, epsilon_bar)
+data_target <- generate_data(n, p, 1, r, h, epsilon_bar)
+
+# Spectral Method
+beta_final_spectral <- Spectral_Method_kr(data$X, data$Y, T, r, epsilon_bar, gamma = 1)
+
+
+# 调用 Rcpp 函数计算 beta
+# 将 X 重塑为二维矩阵 (n * T, p)
+X_matrix <- matrix(NA, nrow = n * T, ncol = p)
+for (t in 1:T) {
+  X_matrix[((t - 1) * n + 1):(t * n), ] <- data$X[, , t]  # 这里要确保X_matrix正确赋值
+}
+
+
+# Group Lasso (using the custom C++ function)
+lambda <- 0.1  # Regularization parameter for Group Lasso
+beta_group_lasso <- groupLasso(X_matrix, data$Y, lambda, T, n, p)
+
+# Compute L2 Loss for Spectral Method
+beta_true <- data$beta  # True beta values from the model
+
+
+```
+
+#### r的估计
+
+```{r}
+r_hat <- r_estimation(data$Y,data$X,T,epsilon_bar)
+r_hat
+
+```
+
+
+
+**可以看到r的估计是非常准确的。**
+
+#### 模型性能比较
+
+* Bechmark:Group-Lasso
+
+```{r}
+l2_loss <- function(x,y){
+  return(min(mean((x-y)^2),1))
+}
+```
+
+
+
+```{r}
+loss_beta <- 0
+for(t in 1:T){
+  beta_true[[t]] <- as.numeric(beta_true[[t]])
+  loss_beta <- l2_loss(beta_true[[t]],beta_final_spectral[[t]]) + loss_beta
+}
+loss_beta/T
+```
+
+
+
+
+
+```{r}
+loss_lasso <- 0
+for(t in 1:T){
+  beta_true[[t]] <- as.numeric(beta_true[[t]])
+  loss_lasso <- l2_loss(beta_true[[t]],beta_group_lasso[,t]) + loss_lasso
+}
+loss_lasso/T
+```
+
+
+
+**可以从l2-loss中看出,Spectral Method是优于Group-Lasso的。**
+
+
+
+#### 迁移性能
+
+
+* n=100,p=10
+
+```{r}
+data <- generate_data(100, 10, T, r, h, epsilon_bar)
+data_target <- generate_data(100, 10, 1, r, h, epsilon_bar)
+```
+
+
+```{r}
+X_target <- as.matrix(data_target$X[,,1])
+
+Y_target <- as.vector(data_target$Y)
+beta0 <- TransRL_Spectral(data$X,data$Y,X_target,Y_target,T,epsilon_bar,gamma,T1=0.5,T2=0.25)
+l2_loss(beta0,data_target$beta[[1]])
+```
+
+
+```{r}
+beta_ls <- lm(Y_target ~ X_target - 1)$coefficients  
+l2_loss(beta_ls,data_target$beta[[1]])
+```
+
+
+* n=100,p=80
+
+```{r}
+data <- generate_data(100, 80, T, r, h, epsilon_bar)
+data_target <- generate_data(100, 80, 1, r, h, epsilon_bar)
+```
+
+
+```{r}
+X_target <- as.matrix(data_target$X[,,1])
+
+Y_target <- as.vector(data_target$Y)
+beta0 <- TransRL_Spectral(data$X,data$Y,X_target,Y_target,T,epsilon_bar,gamma,T1=0.5,T2=0.25)
+l2_loss(beta0,data_target$beta[[1]])
+```
+
+
+```{r}
+beta_ls <- lm(Y_target ~ X_target - 1)$coefficients  
+l2_loss(beta_ls,data_target$beta[[1]])
+```
+
+
+
+
+可以看到在维度较低时，该方法具有正向迁移效果，但是维度很高时没有，但是正如文章理论证明的一样，该方法始终可以保持没有负迁移。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
